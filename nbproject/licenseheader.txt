@@ -1,0 +1,9 @@
+<#if licenseFirst??>
+${licenseFirst}
+</#if>
+${licensePrefix}@Project bankregister
+${licensePrefix}@author Bethyroo
+${licensePrefix}@page 
+<#if licenseLast??>
+${licenseLast}
+</#if>
