@@ -16,7 +16,11 @@ init();
 require_once 'includes/config.php';
 require_once 'includes/db.php';
 install();
-if(!isset($_SESSION['user'])) {
+// now allow creating a new user if flag is set
+if(isset($_SESSION['new_install'])) {
+    // force user page
+    $_REQUEST['page'] = 'users';
+} elseif(!isset($_SESSION['user'])) {
     require 'login.php';
     exit;
 }
@@ -35,6 +39,9 @@ switch($_REQUEST['page']) {
         break;
     case 'users':
         require 'users.php';
+        break;
+    case 'import':
+        require 'import.php';
         break;
     default:
         require 'list.php';

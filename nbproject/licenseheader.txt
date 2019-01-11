@@ -3,7 +3,9 @@ ${licenseFirst}
 </#if>
 ${licensePrefix}@Project bankregister
 ${licensePrefix}@author Bethyroo
-${licensePrefix}@page 
+${licensePrefix}@page ${nameAndExt}
 <#if licenseLast??>
 ${licenseLast}
 </#if>
+if (!isset($handler) || !$handler)
+    die('access denied!');

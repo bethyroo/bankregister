@@ -32,8 +32,7 @@ switch($_REQUEST['action']) {
 }
 $account_info = get_accounts($aID);
 $account_info = $account_info[0];
-$sql = 'select * from transactions where account = '.(int)$aID;
-$transactions = $db->query($sql);
+$transactions = get_transactions($aID);
 $page = 'list.html.php';
 ?>
 
