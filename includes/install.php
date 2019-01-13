@@ -8,7 +8,7 @@
 if (!isset($handler) || !$handler)
     die('access denied!');
 // set current revision for update purposes
-$version = 1.01;
+$version = 1.02;
 
 function install() {
     global $db, $version;
@@ -33,12 +33,16 @@ function install() {
     $result = $db->query('SELECT * from configuration');
     if($result->num_rows) while($row = $result->fetch_assoc()) define(strtoupper($row['key']), $row['value']);
     // now update if required
-    if(VERSION < $version) {
+    if(VERSION < 1.01) {
         // add upgrade scripts here
         $db->query('ALTER TABLE transactions MODIFY `description` varchar(255)');
         $db->query('ALTER TABLE recurring MODIFY `description` varchar(255)');
-        write_config('VERSION', $version);
-    } 
+    }
+    if(VERSION < 1.02) {
+        // add column for transfers
+        $db->query('ALTER TABLE transactions ADD `link` int(11) NOT NULL DEFAULT 0');
+    }
+    write_config('VERSION', $version);
 }
 
 function init() {

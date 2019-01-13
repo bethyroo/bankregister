@@ -34,7 +34,7 @@ function db_perform($table, $data, $type = 'insert', $where = '') {
         }
         $sql = substr($sql,0,-1);
         $sql .= ' where '.$where;
-    }
+    }echo $sql;
     return $db->query($sql);
 }
 
@@ -52,11 +52,11 @@ function write_config($name, $value) {
 function get_accounts($aID = null) {
     global $db;
     $return = array();
-    $sql = 'select * from accounts';
-    if($aID) $sql .= ' where id = '.$aID;
+    $sql = 'select a.*, (select sum(`value`) from transactions t where t.account = a.id) as total from accounts a';
+    if($aID) $sql .= ' where a.id = '.$aID;
     $result = $db->query($sql);
     if($result->num_rows) while($row = $result->fetch_assoc()) {
-        $return[] = array('id' => $row['id'], 'name' => $row['name'], 'type' => $row['type']);
+        $return[] = array('id' => $row['id'], 'name' => $row['name'], 'type' => $row['type'], 'total' => $row['total']);
     }
     return $return;
 }
@@ -122,14 +122,78 @@ function get_transactions($aID) {
 }
 
 function save_transaction($id = 0){
+    global $db;
     $data = array();
     $data['account'] = $_REQUEST['account'];
     $data['description'] = $_REQUEST['description'];
     $data['tran_date'] = $_REQUEST['tran_date'];
     $data['value'] = $_REQUEST['value'];
     $data['outstanding'] = isset($_REQUEST['outstanding'])?'1':'0';
-    $result = db_perform('transactions', $data, ($id?'update':'insert'),($id?' id='.$id:''));
-    return ($result === true);
+    // check if a transfer
+    if(isset($_POST['transfer'])) {
+        $to = get_accounts($_POST['to'])[0];
+        $data['description'] = 'Transfer '.($_POST['how']?'To ':'From ').$to['name'];
+        $data['value'] = $_POST['how']?-$data['value']:$data['value'];
+        $db->begin_transaction();
+        // Save first transaction
+        if(db_perform('transactions', $data, ($id?'update':'insert'),($id?' id='.$id:''))===false) {
+            $db->rollback();
+            return false;
+        }
+        $id = $db->insert_id;
+        // now build data for second account
+        $data2 = array(
+            'account' => $to['id'],
+            'description' => 'Transfer '.($_POST['how']?'From ':'To ').get_accounts($data['account'])[0]['name'],
+            'tran_date' => $data['tran_date'],
+            'value' => -$data['value'],
+            'link' => $id
+        );
+        // save second transaction
+        if(db_perform('transactions', $data2, 'insert')===false) {
+            $db->rollback();
+            return false;
+        }
+        // update first with link to second
+        $data = array('link'=> $db->insert_id);
+        if(db_perform('transactions', $data, ($id?'update':'insert'),($id?' id='.$id:''))===false) {
+            $db->rollback();
+            return false;
+        }
+        // commit the records
+        $db->commit();
+        return true;
+    } elseif($id && transaction_islinked($id)) {// save existing linked transaction
+        $db->begin_transaction();
+        // save this transaction
+        if(db_perform('transactions', $data, 'update',' id='.$id)===false) {
+            $db->rollback();
+            return false;
+        }
+        // update linked transaction
+        $data2 = array(
+            'tran_date' => $data['tran_date'],
+            'value' => -$data['value'],
+        );
+        if(db_perform('transactions', $data2, 'update', ' id = '. transaction_islinked($id))===false) {
+            $db->rollback();
+            return false;
+        }
+        // commit records
+        $db->commit();
+        return true;
+    } else {
+        $result = db_perform('transactions', $data, ($id?'update':'insert'),($id?' id='.$id:''));
+        return ($result === true);
+    }
+}
+
+function transaction_islinked($id) {
+    global $db;
+    $sql = 'select link from transactions where id = '.(int)$id;
+    $result = $db->query($sql);
+    if($result->num_rows) $row = $result->fetch_assoc();
+    return $row['link'];
 }
 
 function load_transaction($id) {
@@ -142,9 +206,16 @@ function load_transaction($id) {
 function delete_transaction($id) {
     global $db;
     if(!(int)$id) return false;
+    $db->begin_transaction();
+    $link = transaction_islinked($id);
     $sql = 'delete from transactions where id = '.(int)$id;
-    $db->query($sql);
-    return true;
+    $sql2 = 'delete from transactions where id = '.(int)$link;
+    if($db->query($sql)===true && $db->query($sql2)===true) {
+        $db->commit();
+        return true;
+    }
+    $db->rollback();
+    return false;
 }
 
 function get_users($id = 0) {
