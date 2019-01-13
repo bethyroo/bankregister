@@ -43,6 +43,9 @@ switch($_REQUEST['page']) {
     case 'import':
         require 'import.php';
         break;
+    case 'recurring':
+        require 'recurring.php';
+        break;
     default:
         require 'list.php';
 }

@@ -52,11 +52,13 @@ function write_config($name, $value) {
 function get_accounts($aID = null) {
     global $db;
     $return = array();
-    $sql = 'select a.*, (select sum(`value`) from transactions t where t.account = a.id) as total from accounts a';
+    $sql = 'select a.*, (select sum(`value`) from transactions t where t.account = a.id) as total, '
+            . '(select count(*) from recurring r where r.account = a.id) as recurring'
+            . ' from accounts a';
     if($aID) $sql .= ' where a.id = '.$aID;
     $result = $db->query($sql);
     if($result->num_rows) while($row = $result->fetch_assoc()) {
-        $return[] = array('id' => $row['id'], 'name' => $row['name'], 'type' => $row['type'], 'total' => $row['total']);
+        $return[] = array('id' => $row['id'], 'name' => $row['name'], 'type' => $row['type'], 'total' => $row['total'], 'recurring' => $row['recurring']);
     }
     return $return;
 }

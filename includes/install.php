@@ -8,7 +8,7 @@
 if (!isset($handler) || !$handler)
     die('access denied!');
 // set current revision for update purposes
-$version = 1.02;
+$version = 1.03;
 
 function install() {
     global $db, $version;
@@ -41,6 +41,10 @@ function install() {
     if(VERSION < 1.02) {
         // add column for transfers
         $db->query('ALTER TABLE transactions ADD `link` int(11) NOT NULL DEFAULT 0');
+    }
+    if(VERSION < 1.03) {
+        // add column for transfers
+        $db->query('ALTER TABLE recurring ADD `transfer` enum("0","1") NOT NULL DEFAULT "0"');
     }
     write_config('VERSION', $version);
 }

@@ -13,7 +13,7 @@ if (!isset($handler) || !$handler)
         <title><?php echo $title; ?></title>
         <style type="text/css">
             body{
-                background-color: #009999
+                background-color: #bb2222;
             }
             td {
                 vertical-align: top;
@@ -65,11 +65,10 @@ if (!isset($handler) || !$handler)
                 overflow: auto;
             }
             .cell1 {
-                width: 8em;
+                width: 12em;
             }
             .cell2 {
                 width: 20em;
-                overflow: hidden;
             }
             .cell3 {
                 width: 8em;
@@ -79,6 +78,9 @@ if (!isset($handler) || !$handler)
             }
             .cell5 {
                 width: 12em;
+            }
+            .foot {
+                width: 52em;
             }
             
         </style>
@@ -95,6 +97,35 @@ if (!isset($handler) || !$handler)
                     document.getElementById('how').style.display = 'none';
                 }
             }
+            function frequency(unit) {
+                // hide all
+                document.getElementById('weekday').style.display = 'none';
+                document.getElementById('month').style.display = 'none';
+                document.getElementById('day').style.display = 'none';
+                document.getElementById('weekend').style.display = 'none';
+                document.getElementById('weekend_label').style.display = 'none';
+                document.getElementById('on_label').style.display = 'none';
+                // now show selected
+                switch(unit) {
+                    case '3':// year
+                        // show month
+                        document.getElementById('month').style.display = '';
+                    case '2':// month
+                        // show day of month, on label
+                        document.getElementById('day').style.display = '';
+                        document.getElementById('on_label').style.display = '';
+                    case '0':// day
+                        // show weekend modifier
+                        document.getElementById('weekend').style.display = '';
+                        document.getElementById('weekend_label').style.display = '';
+                    break;
+                    case '1':// week
+                        // show days of week
+                        document.getElementById('weekday').style.display = '';
+                        document.getElementById('on_label').style.display = '';
+                    break;
+                }
+            }
         </script>
     </head>
     <body>
@@ -105,7 +136,7 @@ if (!isset($handler) || !$handler)
                     <button type="button" onclick="window.location.href = '?page=logout'">Logout</button>
                     <button type="button" onclick="window.location.href = '?page=users'">Manage Users</button>
                     <button type="button" onclick="window.location.href = '?page=import'">Import Transactions</button>
-                    <button type="button" onclick="window.location.href = '?page=recurring'">Recurring Transactions</button>
+                    <button type="button" onclick="window.location.href = '?'">Transactions</button>
                     <?php echo $message; ?>
                 </td>
             </tr>
@@ -116,14 +147,14 @@ if (!isset($handler) || !$handler)
                             No accounts.
                         <?php } else { ?>
                             <strong>Accounts</strong><br>
-                            <?php foreach ($accounts_array as $account) { $sum += $account['total']; ?>
+                            <?php foreach ($accounts_array as $account) { $sum += $account['recurring']; ?>
                             <input type="radio" name="aID" value="<?php echo $account['id']; ?>"
                                    <?php if($account['id'] == $aID) echo 'checked="checked"'; ?> 
                                    onclick="document.getElementById('account_form').submit()"/>
-                                <label><?php echo $account['name'].' ('.$account['total'].')'; ?></label>
+                                <label><?php echo $account['name'].' ('.$account['recurring'].')'; ?></label>
                                 <br>
                             <?php } ?>
-                                <label>Total all accounts: <?php echo $sum; ?></label>
+                                <label>Total Recurring Transactions: <?php echo $sum; ?></label>
                                 <br>
                         <?php } ?>
                         <button type="button" onclick="window.location.href='?page=account'">Manage Accounts</button>
@@ -134,10 +165,9 @@ if (!isset($handler) || !$handler)
                         <input type="hidden" name="aID" value="<?php echo $aID; ?>">
                         <table>
                         <thead class="fixed">
-                            <th class="cell1">Date</th>
-                            <th class="cell2">description</th>
+                            <th class="cell1">Frequency</th>
+                            <th class="cell2">Description</th>
                             <th class="cell3">Amount</th>
-                            <th class="cell4">Balance</th>
                             <th class="cell5"></th>
                         </thead>
                         <tbody class="scroll" id="transactions">
@@ -153,21 +183,47 @@ if (!isset($handler) || !$handler)
                             if($total < 0 && $account_info['type'] == 'bank') $class .= ' warning';
                             ?>
                         <tr class="<?php echo $class; ?>" id="row_<?php echo $row['id']; ?>">
-                            <td class="cell1"><?php echo $row['tran_date']; ?></td>
+                            <td class="cell1"><?php echo $row['frequency']; ?></td>
                             <td class="cell2"><?php echo $row['description']; ?></td>
                             <td class="cell3"><?php echo money_format('%#10n', $row['value']); ?></td>
-                            <td class="cell4"><?php echo money_format('%#10n', $total); ?></td>
                             <td class="cell5"><button type="button" onclick="window.location.href='?action=edit&aID=<?php echo $aID; ?>&id=<?php echo $row['id']; ?>'">Edit</button></td>
                         </tr>
                         <?php } ?> 
                         </tbody>
-                        <tbody class="fixed">
+                        <tfoot class="fixed">
                             <tr class="form">
-                                <td class="cell1">
+                                <td colspan="4" class="foot">
                                     <input type="hidden" name="id" value="<?php echo $transaction['id']; ?>">
-                                    <input type="date" name="tran_date" value="<?php echo (isset($transaction['tran_date'])?$transaction['tran_date']:date('Y-m-d')); ?>">
-                                </td>
-                                <td class="cell2">
+                                    <!-- Frequency -->
+                                    <label id="increment_label">Every:</label>
+                                    <select name="increment" id="increment">
+                                        <?php for($i = 1;$i < 32;$i++)
+                                        echo '<option value="'.$i.'">'.$i.'</option>'; ?>
+                                    </select>
+                                    <select name="unit" id="unit" onchange="frequency(this.value)">
+                                        <?php foreach($frequency_unit as $key => $value) 
+                                            echo '<option value="'.$key.'"'.($transaction['unit'] == $key?'selected="selected"':'').'>'.$value.'</option>'; ?>
+                                    </select>
+                                    <label id="on_label">On</label>
+                                    <select name="weekday" id="weekday">
+                                        <?php foreach($frequency_days as $key => $value)
+                                            echo '<option value"'.$key.'" '.($transaction['day']==$key?'selected="selected"':'').'>'.$value.'</option>'; ?>
+                                    </select>
+                                    <select name="month" id="month">
+                                        <?php for($i = 1;$i < 13;$i++)
+                                        echo '<option value="'.$i.'">'.$i.'</option>'; ?>
+                                    </select>
+                                    <select name="day" id="day">
+                                        <?php for($i = 1;$i < 32;$i++)
+                                        echo '<option value="'.$i.'">'.$i.'</option>'; ?>
+                                    </select>
+                                    <label id="weekend_label">Adjust date if weekend:</label>
+                                    <select name="weekend" id="weekend">
+                                        <?php foreach($frequency_weekend as $key => $value)
+                                            echo '<option value="'.$key.'" '.($transaction['weekend'] == $key?'selected="selected"':'').'>'.$value.'</option>'; ?>
+                                    </select>
+                                    <!-- end recurring frequency -->
+                                    <br>
                                     <input type="text" id="description" name="description" value="<?php echo $transaction['description']; ?>" size="30" placeholder="Description">
                                     <!-- Transfer form -->
                                     <select name="how" id="how" style="display:none;">
@@ -191,10 +247,7 @@ if (!isset($handler) || !$handler)
                                     <?php } else { ?>
                                     <input type="hidden" name="account" value="<?php echo $aID; ?>">
                                     <?php } ?>
-                                </td>
-                                <td class="cell3"><input type="text" name="value" value="<?php echo $transaction['value']; ?>" placeholder="$ 0.00" size="8"></td>
-                                <td class="cell4"><input type="checkbox" name="outstanding" value="1"<?php echo ($transaction['outstanding']?'checked=checked':''); ?>" size="8"><label>Outstanding</label></td>
-                                <td class="cell5">
+                                    <input type="text" name="value" value="<?php echo $transaction['value']; ?>" placeholder="$ 0.00" size="8">
                                     <input type="submit" name="action" value="<?php echo $transaction['id']?'save':'add';?>">
                                     <?php if($transaction['id']) { ?>
                                     <input type="submit" name="action" value="delete">
@@ -204,7 +257,7 @@ if (!isset($handler) || !$handler)
                                     <?php } ?>
                                 </td>
                             </tr>
-                        </tbody>
+                        </tfoot>
                     </table>
                     </form>
               </td>
@@ -212,6 +265,7 @@ if (!isset($handler) || !$handler)
         </table>
         <script>
             document.getElementById('transactions').scrollTop = 1000000;
+            frequency(<?php echo ($transaction['unit']?$transaction['unit']:0); ?>);
         </script>
     </body>
 </html>
