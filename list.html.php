@@ -52,6 +52,11 @@ if (!isset($handler) || !$handler)
             .warning {
                 
             }
+            #transactions{
+                height: 90vh;
+                overflow: scroll;
+            }
+            
         </style>
     </head>
     <img src="monkey.gif" alt="monkey" style="width:90px; height:90px;">
@@ -61,6 +66,7 @@ if (!isset($handler) || !$handler)
                 <td colspan="2">
                     <button type="button" onclick="window.location.href = '?page=logout'">Logout</button>
                     <button type="button" onclick="window.location.href = '?page=users'">Manage Users</button>
+                    <button type="button" onclick="window.location.href = '?page=import'">Import Transactions</button>
                     <?php echo $message; ?>
                 </td>
             </tr>
@@ -92,10 +98,10 @@ if (!isset($handler) || !$handler)
                         <th>Balance</th>
                         <th></th>
                         </thead>
-                        <tbody style="height: 50%; overflow: scroll;">
+                        <tbody id="transactions">
                         <?php 
                         $total = 0;
-                        while($row = $transactions->fetch_assoc()) {
+                        foreach($transactions as $row) {
                             $total += $row['value'];
                             $odd = !$odd; 
                             $class = $odd?'odd':'even';
@@ -111,6 +117,7 @@ if (!isset($handler) || !$handler)
                             <td><button type="button" onclick="window.location.href='?action=edit&id=<?php echo $row['id']; ?>'">Edit</button></td>
                         </tr>
                         <?php } ?> 
+                        </tbody>
                             <tr class="form">
                                 <td>
                                     <input type="hidden" name="account" value="<?php echo $aID; ?>">
@@ -122,7 +129,6 @@ if (!isset($handler) || !$handler)
                                 <td><input type="checkbox" name="outstanding" value="1"<?php echo ($transaction['outstanding']?'checked=checked':''); ?>" size="8"></td>
                                 <td><input type="submit" name="action" value="<?php echo $transaction['id']?'save':'add';?>"></td>
                             </tr>
-                        </tbody>
                     </table>
                     </form>
               </td>
