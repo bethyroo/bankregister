@@ -11,6 +11,11 @@ if (!isset($handler) || !$handler)
 <html>
     <head>
         <title><?php echo $title; ?></title>
+        <style>
+            body{
+                background-color: #999900
+            }
+        </style>
     </head>
     <body>
         <form method="post" name="account_form" id="account_form">

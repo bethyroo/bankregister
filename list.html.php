@@ -22,8 +22,8 @@ if (!isset($handler) || !$handler)
                 
             }
             table table {
-                border-width: 2px;
-                border-style: solid;
+                border-width: 6px;
+                border-style: outset;
                 border-color: gray;
                 border-collapse: collapse;
             }
@@ -54,6 +54,7 @@ if (!isset($handler) || !$handler)
             }
         </style>
     </head>
+    <img src="monkey.gif" alt="monkey" style="width:90px; height:90px;">
     <body>
         <table>
             <tr>
@@ -89,6 +90,7 @@ if (!isset($handler) || !$handler)
                         <th>description</th>
                         <th>Amount</th>
                         <th>Balance</th>
+                        <th></th>
                         </thead>
                         <tbody style="height: 50%; overflow: scroll;">
                         <?php 
@@ -123,7 +125,7 @@ if (!isset($handler) || !$handler)
                         </tbody>
                     </table>
                     </form>
-                </td>
+              </td>
             </tr>
         </table>
     </body>
