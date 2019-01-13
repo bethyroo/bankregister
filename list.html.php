@@ -59,8 +59,8 @@ if (!isset($handler) || !$handler)
             
         </style>
     </head>
-    <img src="monkey.gif" alt="monkey" style="width:90px; height:90px;">
     <body>
+    <img src="monkey.gif" style="width:80px; height:80px;">
         <table>
             <tr>
                 <td colspan="2">
