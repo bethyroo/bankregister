@@ -42,24 +42,25 @@ switch($_REQUEST['action']) {
     case 'save':
     case 'add':
         if(save_recurring($_POST['id'])) {
-            header('location: .?aID='.$aID);
+            header('location: .?page=recurring&aID='.$aID);
         } else {
             $message = 'Error saving transaction.';
         }
         break;
     case 'edit':
         $transaction = load_recurring($_REQUEST['id']);
+        //var_dump($transaction);
         break;
     case 'delete':
         if(delete_recurring($_POST['id'])) {
-            header('location: .?aID='.$aID);
+            header('location: .?page=recurring&aID='.$aID);
         } else {
             $message = 'Error deleting transaction.';
         }
 }
 $account_info = get_accounts($aID);
 $account_info = $account_info[0];
-//$transactions = get_recurring($aID);
+$transactions = get_recurring($aID);
 $title = 'Recurring Transactions';
 $page = 'recurring.html.php';
 ?>
