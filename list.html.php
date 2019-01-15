@@ -98,7 +98,7 @@ if (!isset($handler) || !$handler)
         </script>
     </head>
     <body>
-    <!--<img src="monkey.gif" alt="monkey" style="width:90px; height:90px;">-->
+    
         <table>
             <tr>
                 <td colspan="2">
@@ -111,6 +111,7 @@ if (!isset($handler) || !$handler)
             </tr>
             <tr>
                 <td>
+                    <img src="monkey.gif" style="width:180px;">
                     <form method="get" name="account_form" id="account_form">
                         <?php if(!count($accounts_array)) { ?>
                             No accounts.

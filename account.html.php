@@ -13,7 +13,11 @@ if (!isset($handler) || !$handler)
         <title><?php echo $title; ?></title>
         <style>
             body{
-                background-color: #999900
+                background-color: #999900;
+                background-image: url(minions.jpg);
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+                background-position: center;
             }
         </style>
     </head>
