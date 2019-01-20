@@ -36,6 +36,9 @@ if (!isset($handler) || !$handler)
             <input type="radio" name="type" value="credit" <?php if($account['type']=='credit') echo "checked=checked"; ?>>
             <label>Credit Card</label>
             <br>
+            <label>Credit Limit:</label>
+            <input type="text" name="credit" value="<?php echo $account['credit']; ?>">
+            <br>
             <input type="submit" name="action" value="save">
             <button type="button" onclick="window.location.href = '?page=account'">Cancel</button>
             <?php } else { ?>

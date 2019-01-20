@@ -34,7 +34,8 @@ function db_perform($table, $data, $type = 'insert', $where = '') {
         }
         $sql = substr($sql,0,-1);
         $sql .= ' where '.$where;
-    }echo $sql;
+    }
+    //echo $sql;
     return $db->query($sql);
 }
 
@@ -60,13 +61,19 @@ function write_config($name, $value) {
 function get_accounts($aID = null) {
     global $db;
     $return = array();
-    $sql = 'select a.*, (select sum(`value`) from transactions t where t.account = a.id) as total, '
-            . '(select count(*) from recurring r where r.account = a.id) as recurring'
+    $sql = 'select a.*, (select sum(`value`) from transactions t where t.account = a.id and t.statement = "0") as total, '
+            . '(select count(*) from recurring r where r.account = a.id) as recurring, '
+            . '(select sum(`value`) from transactions s where s.account = a.id and s.tran_date < now() and s.statement = "0") as available'
             . ' from accounts a';
     if($aID) $sql .= ' where a.id = '.$aID;
     $result = $db->query($sql);
+    $i = 0;
     if($result->num_rows) while($row = $result->fetch_assoc()) {
-        $return[] = array('id' => $row['id'], 'name' => $row['name'], 'type' => $row['type'], 'total' => $row['total'], 'recurring' => $row['recurring']);
+        foreach($row as $key => $value)
+            $return[$i][$key] = $value;
+        if($return[$i]['type']=='credit'&& $return[$i]['credit']) $return[$i]['available'] = ($return[$i]['credit']+$return[$i]['available']);
+        $i++;
+        //$return[] = array('id' => $row['id'], 'name' => $row['name'], 'type' => $row['type'], 'total' => $row['total'], 'recurring' => $row['recurring']);
     }
     return $return;
 }
@@ -76,6 +83,7 @@ function save_account($aID) {
     $data = array();
     $data['name'] = $_REQUEST['name'];
     $data['type'] = $_REQUEST['type'];
+    $data['credit'] = $_REQUEST['credit'];
     $result = db_perform('accounts', $data, ($aID?'update':'insert'),($aID?' id='.$aID:''));
     return ($result === true);
 }
@@ -103,7 +111,7 @@ function add_account($name) {
 function delete_account($aID) {
     global $db;
     if(!(int)$aID) return false;
-    $sql = 'select sum(value) as balance from transactions where account = '.(int)$aID;
+    $sql = 'select sum(value) as balance from transactions where statement = "0" and account = '.(int)$aID;
     $result = $db->query($sql);
     if($result->num_rows) $row = $result->fetch_assoc();
     if($row['balance'] != 0) return false;// cannot delete account with a balance
@@ -121,7 +129,7 @@ function delete_account($aID) {
 function get_transactions($aID) {
     global $db;
     $return = array();
-    $sql = 'select * from transactions where account = '.(int)$aID;
+    $sql = 'select * from transactions where account = '.(int)$aID.' order by tran_date, id';
     $result = $db->query($sql);
     $i = 0;
     if($result->num_rows) while($row = $result->fetch_assoc()) {
@@ -133,19 +141,20 @@ function get_transactions($aID) {
     return $return;
 }
 
-function save_transaction($id = 0){
+function save_transaction($source, $id = 0){
     global $db;
     $data = array();
-    $data['account'] = $_REQUEST['account'];
-    $data['description'] = $_REQUEST['description'];
-    $data['tran_date'] = $_REQUEST['tran_date'];
-    $data['value'] = $_REQUEST['value'];
-    $data['outstanding'] = isset($_REQUEST['outstanding'])?'1':'0';
+    $data['account'] = $source['account'];
+    $data['description'] = $source['description'];
+    $data['tran_date'] = $source['tran_date'];
+    $data['value'] = $source['value'];
+    $data['outstanding'] = isset($source['outstanding'])?'1':'0';
+    $data['statement'] = isset($source['statement'])?'1':'0';
     // check if a transfer
-    if(isset($_POST['transfer'])) {
-        $to = get_accounts($_POST['to'])[0];
-        $data['description'] = 'Transfer '.($_POST['how']?'To ':'From ').$to['name'];
-        $data['value'] = $_POST['how']?-$data['value']:$data['value'];
+    if(isset($source['transfer']) && $source['transfer'] == '1') {
+        $to = get_accounts($source['to'])[0];
+        $data['description'] = 'Transfer '.($source['how']?'To ':'From ').$to['name'];
+        $data['value'] = $source['how']?-$data['value']:$data['value'];
         $db->begin_transaction();
         // Save first transaction
         if(db_perform('transactions', $data, ($id?'update':'insert'),($id?' id='.$id:''))===false) {
@@ -156,7 +165,7 @@ function save_transaction($id = 0){
         // now build data for second account
         $data2 = array(
             'account' => $to['id'],
-            'description' => 'Transfer '.($_POST['how']?'From ':'To ').get_accounts($data['account'])[0]['name'],
+            'description' => 'Transfer '.($source['how']?'From ':'To ').get_accounts($data['account'])[0]['name'],
             'tran_date' => $data['tran_date'],
             'value' => -$data['value'],
             'link' => $id
@@ -235,7 +244,7 @@ function delete_transaction($id) {
 function get_recurring($aID) {
     global $db;
     $return = array();
-    $sql = 'select * from recurring where account = '.(int)$aID;
+    $sql = 'select * from recurring where account = '.(int)$aID.' order by id';
     $result = $db->query($sql);
     $i = 0;
     if($result->num_rows) while($row = $result->fetch_assoc()) {
@@ -289,9 +298,8 @@ function serialize_frequency() {
     // also need start date
     $data['start'] = $_POST['start'];
     // also process transfer details
-    if($data['transfer']) {
+    if($_POST['transfer']) {
         $data['to'] = $_POST['to'];
-        if($data['how']) $data['value'] = -$data['value'];
     }
     $return = '';
     foreach($data as $key => $value) {
@@ -339,7 +347,7 @@ function frequency_text($data) {
 }
 
 function calculate_next($data, $date = '') {
-    if($date == '') $date = date('Y-m-d');
+    if($date == '') $date = date('Y-m-d', strtotime('tomorrow'));
     $frequency = unserialize_frequency($data);
     $start = strtotime($frequency['start']);
     $end = strtotime($date);
@@ -347,42 +355,42 @@ function calculate_next($data, $date = '') {
     switch($frequency['unit']) {
         case '0':// days
             $increment = 60*60*24*$frequency['increment'];
-            while($current < $end) {// increment by 1 unit
+            while($current <= $end) {// increment by 1 unit
                 $current += $increment;
             }
             // now we have target date - check for weekend modifier
             $old = $current;
-            $current = weekend_modify($current, $end, $increment, $frequency['weekend']);
-            if($current < $end) {
-                $current = weekend_modify($old+$increment, $end, $increment, $frequency['weekend']);
+            $current = weekend_modify($current, $frequency['weekend']);
+            if($current <= $end) {
+                $current = weekend_modify($old+$increment, $frequency['weekend']);
             }
             break;
         case '1':// weeks
             // index until it is on the right weekday
             while(date('w',$current)!=$frequency['weekday']) $current += 60*60*24;
             $increment = 60*60*24*7*$frequency['increment'];
-            while($current < $end) {
+            while($current <= $end) {
                 $current += $increment;
             }
             break;
         case '2':// months
-            while($current < $end) {
+            while($current <= $end) {
                 $current = strtotime("+".$frequency['increment']." month", $current);
             }
             $old = $current;
-            $current = weekend_modify($current,$end);
-            if($current < $end) {
-                $current = weekend_modify(strtotime("+".$frequency['increment']." month", $old), $end, $increment, $frequency['weekend']);
+            $current = weekend_modify($current,$frequency['weekend']);
+            if($current <= $end) {
+                $current = weekend_modify(strtotime("+".$frequency['increment']." month", $old), $frequency['weekend']);
             }
             break;
         case '3':// years
-            while($current < $end) {
+            while($current <= $end) {
                 $current = strtotime("+".$frequency['increment']." year", $current);
             }
             $old = $current;
-            $current = weekend_modify($current,$end);
-            if($current < $end) {
-                $current = weekend_modify(strtotime("+".$frequency['increment']." year", $old), $end, $increment, $frequency['weekend']);
+            $current = weekend_modify($current,$frequency['weekend']);
+            if($current <= $end) {
+                $current = weekend_modify(strtotime("+".$frequency['increment']." year", $old), $frequency['weekend']);
             }
             break;
     }
@@ -404,13 +412,42 @@ function weekend_modify($current, $weekend) {
     }
     return $current;
 }
+
+function count_recurring() {
+    global $db;
+    $sql = "select count(*) as num from recurring where next < now()";
+    $result = $db->query($sql);
+    $return = $result->fetch_assoc();
+    return $return['num'];
+}
+
+function perform_recurring() {
+    global $db;
+    $sql = "select * from recurring where next < now()";
+    $result = $db->query($sql);
+    if(!$result->num_rows) return false;
+    while($row = $result->fetch_assoc()) {
+        $data = $row;
+        $data = unserialize_frequency($data);
+        $data['tran_date'] = $data['next'];
+        while(strtotime($data['tran_date']) < time()) {
+            save_transaction($data);
+            $data['tran_date'] = calculate_next($data, $data['tran_date']);
+            //echo($data['tran_date']);
+        }
+        // now save updated next date
+        $save = array('next' => $data['tran_date']);
+        db_perform('recurring', $save, 'update','id='.$data['id']);
+    }
+    return true;
+}
 /*********************************************************************
  * User Functions                                                   *
  ********************************************************************/
 function get_users($id = 0) {
     global $db;
     $return = array();
-    $sql = 'select * from users';
+    $sql = 'select * from users order by name';
     if($id) $sql .= ' where id = '.(int)$id;
     $result = $db->query($sql);
     $i = 0;

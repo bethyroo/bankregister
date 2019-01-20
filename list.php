@@ -20,7 +20,7 @@ $transaction = $_POST;
 switch($_REQUEST['action']) {
     case 'save':
     case 'add':
-        if(save_transaction($_POST['id'])) {
+        if(save_transaction($_REQUEST, $_POST['id'])) {
             header('location: .?aID='.$aID);
         } else {
             $message = 'Error saving transaction.';
@@ -39,6 +39,8 @@ switch($_REQUEST['action']) {
 $account_info = get_accounts($aID);
 $account_info = $account_info[0];
 $transactions = get_transactions($aID);
+// see if any recurring
+$recurring = count_recurring();
 $page = 'list.html.php';
 ?>
 

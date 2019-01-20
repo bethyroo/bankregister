@@ -36,12 +36,23 @@ if (!isset($handler) || !$handler)
                 border-width: 0;
                 border-color: #009900;
             }
+            .edit {
+                border: 3px inset;
+            }
+            .negative {
+                color: maroon;
+            }
             .odd {
                 background-color: white;
             }
             .even {
                 background-color: #ccccff;
-                
+            }
+            .odd.highlight {
+                background-color: #ff9724;
+            }
+            .even.highlight {
+                background-color: #e27906;
             }
             .outstanding.even {
                 background-color: #5eb;
@@ -49,8 +60,17 @@ if (!isset($handler) || !$handler)
             .outstanding.odd {
                 background-color: #77ffdd;
             }
-            .negative {
-                
+            .imbalance {
+                color: red;
+            }
+            .statement {
+                background: repeating-linear-gradient(
+                    45deg,
+                    #606dbc,
+                    #606dbc 10px,
+                    #465298 10px,
+                    #465298 20px
+                );
             }
             .warning {
                 
@@ -95,6 +115,9 @@ if (!isset($handler) || !$handler)
                     document.getElementById('how').style.display = 'none';
                 }
             }
+            function toggleHighlight(item) {
+                item.classList.toggle('highlight');
+            }
         </script>
     </head>
     <body>
@@ -121,7 +144,7 @@ if (!isset($handler) || !$handler)
                             <input type="radio" name="aID" value="<?php echo $account['id']; ?>"
                                    <?php if($account['id'] == $aID) echo 'checked="checked"'; ?> 
                                    onclick="document.getElementById('account_form').submit()"/>
-                                <label><?php echo $account['name'].' ('.$account['total'].')'; ?></label>
+                                <label><?php echo $account['name'].' ('.$account['total'].')'.' <span class=negative>'.$account['available'].'</span>'; ?></label>
                                 <br>
                             <?php } ?>
                                 <label>Total all accounts: <?php echo $sum; ?></label>
@@ -131,6 +154,13 @@ if (!isset($handler) || !$handler)
                     </form>
                 </td>
                 <td>
+                    <?php if($recurring) { ?>
+                    <span id="recurring">
+                        There are <?php echo $recurring; ?> recurring transactions. 
+                        <button type="button" onclick="window.location.href='?page=recurring&action=perform'">Perform</button>
+                    </span>
+                    <br>
+                    <?php } ?>
                     <form method="post" action="index.php">
                         <input type="hidden" name="aID" value="<?php echo $aID; ?>">
                         <table>
@@ -139,26 +169,40 @@ if (!isset($handler) || !$handler)
                             <th class="cell2">description</th>
                             <th class="cell3">Amount</th>
                             <th class="cell4">Balance</th>
-                            <th class="cell5"></th>
+                            <th class="cell5">Statement</th>
                         </thead>
                         <tbody class="scroll" id="transactions">
                         <?php 
                         $total = 0;
                         foreach($transactions as $row) {
-                            $total += $row['value'];
-                            $row_last = $row['id'];
+                            // track total
+                            if($row['statement']=='0') $total += $row['value'];
+                            // track outstanding
+                            if($row['outstanding']) $outstanding += $row['value'];
+                            // imbalance amount
+                            if($row['statement'] && $total-$outstanding != $row['value']) $imbalance = $total-$outstanding-$row['value'];
+                            // class odd/even
                             $odd = !$odd; 
                             $class = $odd?'odd':'even';
+                            // special classes
                             if($row['outstanding']) $class .= ' outstanding';
                             if($row['value'] < 0) $class .= ' negative';
-                            if($total < 0 && $account_info['type'] == 'bank') $class .= ' warning';
+                            if($total < 0 && $account_info['type'] == 'bank') $class .= ' warning';// overdrawn
+                            if($row['id'] == $transaction['id']) $class .= ' edit';// line being edited
+                            if($row['statement']) {
+                                $class .= ' statement';
+                                if($total-$outstanding != $row['value']) $class .= ' imbalance';
+                            }
                             ?>
-                        <tr class="<?php echo $class; ?>" id="row_<?php echo $row['id']; ?>">
+                            <tr class="<?php echo $class; ?>" id="row_<?php echo $row['id']; ?>" onclick="toggleHighlight(this)" ondblclick="window.location.href='?action=edit&aID=<?php echo $aID; ?>&id=<?php echo $row['id']; ?>'">
                             <td class="cell1"><?php echo $row['tran_date']; ?></td>
-                            <td class="cell2"><?php echo $row['description']; ?></td>
-                            <td class="cell3"><?php echo money_format('%#10n', $row['value']); ?></td>
-                            <td class="cell4"><?php echo money_format('%#10n', $total); ?></td>
-                            <td class="cell5"><button type="button" onclick="window.location.href='?action=edit&aID=<?php echo $aID; ?>&id=<?php echo $row['id']; ?>'">Edit</button></td>
+                            <td class="cell2"><?php echo $row['statement']?'Outstanding:'.money_format('%#10n',$outstanding):$row['description']; ?></td>
+                            <td class="cell3"><?php echo $row['statement']?$imbalance:money_format('%#10n', $row['value']); ?></td>
+                            <td class="cell4"><?php echo money_format('%#10n', $row['statement']?$row['value']:$total); ?></td>
+                            <td class="cell5">
+                                <button type="button" onclick="window.location.href='?action=edit&aID=<?php echo $aID; ?>&id=<?php echo $row['id']; ?>'">Edit</button>
+                                <?php if($row['statement']&&$total-$outstanding != $row['value']) echo 'Imbalance'; ?>
+                            </td>
                         </tr>
                         <?php } ?> 
                         </tbody>
@@ -203,6 +247,9 @@ if (!isset($handler) || !$handler)
                                     <input type="checkbox" name="transfer" id="transfer" value="1" onchange="toggleTransfer(this.checked)">
                                     <label>Transfer</label>
                                     <?php } ?>
+                                    <br>
+                                    <input type="checkbox" name="statement" value="1" <?php if($transaction['statement']) echo 'checked="checked"';?>>
+                                    <label>Statement</label>
                                 </td>
                             </tr>
                         </tbody>
@@ -212,7 +259,10 @@ if (!isset($handler) || !$handler)
             </tr>
         </table>
         <script>
-            document.getElementById('transactions').scrollTop = 1000000;
+            // scroll to selected or last row
+            document.getElementById('row_<?php echo $transaction['id']?$transaction['id']:$row['id']; ?>').scrollIntoView();
+            // select description fields
+            document.getElementById('description').focus();
         </script>
     </body>
 </html>

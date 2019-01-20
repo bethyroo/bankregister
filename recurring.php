@@ -57,6 +57,12 @@ switch($_REQUEST['action']) {
         } else {
             $message = 'Error deleting transaction.';
         }
+    case 'perform':
+        if(perform_recurring()){
+            header('location: ?');
+        } else {
+            $message = "No recurring transactions to perform.";
+        }
 }
 $account_info = get_accounts($aID);
 $account_info = $account_info[0];

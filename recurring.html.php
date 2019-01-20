@@ -135,10 +135,11 @@ if (!isset($handler) || !$handler)
             </tr>
             <tr>
                 <td>
-                    <form method="get" name="account_form" id="account_form">
+                    <form method="get" name="account_form" id="account_form" action="index.php?page=recurring">
                         <?php if(!count($accounts_array)) { ?>
                             No accounts.
                         <?php } else { ?>
+                            <input type="hidden" name="page" value="recurring">
                             <strong>Accounts</strong><br>
                             <?php foreach ($accounts_array as $account) { $sum += $account['recurring']; ?>
                             <input type="radio" name="aID" value="<?php echo $account['id']; ?>"
@@ -214,36 +215,34 @@ if (!isset($handler) || !$handler)
                                     <input type="date" name="start" value="<?php echo ($transaction['start']?$transaction['start']:date('Y-m-d')); ?>">
                                     <!-- end recurring frequency -->
                                     <input type="text" id="description" name="description" value="<?php echo $transaction['description']; ?>" size="30" placeholder="Description">
-                                    <!-- Transfer form -->
-                                    <select name="how" id="how" style="display:none;">
-                                        <option value="1" selected="selected">To</option>
-                                        <option value="0">From</option>
-                                    </select>
-                                    <select name="to" id="to" style="display:none;">
-                                        <?php foreach($accounts_array as $account) { 
-                                            echo '<option value="'.$account['id'].'"'.($account['id']==$aID?' selected="selected"':'').'>'.$account['name'].'</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                    <!-- End transfer form -->
+                                    <!-- Primary Account id -->
                                     <?php if($transaction['id'] && !$transaction['link']) { ?>
                                     <select name="account">
                                         <?php foreach($accounts_array as $account) { 
-                                            echo '<option value="'.$account['id'].'"'.($account['id']==$aID?' selected="selected"':'').'>'.$account['name'].'</option>';
+                                            echo '<option value="'.$account['id'].'"'.($account['id']==$transaction['account']?' selected="selected"':'').'>'.$account['name'].'</option>';
                                         }
                                         ?>
                                     </select>
                                     <?php } else { ?>
                                     <input type="hidden" name="account" value="<?php echo $aID; ?>">
                                     <?php } ?>
+                                    <!-- Transfer form -->
+                                    <label>From:</label>
+                                    <select name="to" id="to" style="display:none;">
+                                        <?php foreach($accounts_array as $account) { 
+                                            echo '<option value="'.$account['id'].'"'.($account['id']==$transaction['to']?' selected="selected"':'').'>'.$account['name'].'</option>';
+                                        }
+                                        ?>
+                                    </select>
+                                    <!-- End transfer form -->
+                                    
                                     <input type="text" name="value" value="<?php echo $transaction['value']; ?>" placeholder="$ 0.00" size="8">
                                     <input type="submit" name="action" value="<?php echo $transaction['id']?'save':'add';?>">
                                     <?php if($transaction['id']) { ?>
                                     <input type="submit" name="action" value="delete">
-                                    <?php } else { ?>
-                                    <input type="checkbox" name="transfer" id="transfer" value="1" onchange="toggleTransfer(this.checked)">
+                                    <?php }  ?>
+                                    <input type="checkbox" name="transfer" id="transfer" value="1" <?php if($transaction['transfer']) echo 'checked="checked"'; ?> onchange="toggleTransfer(this.checked)">
                                     <label>Transfer</label>
-                                    <?php } ?>
                                 </td>
                             </tr>
                         </tfoot>
@@ -254,6 +253,7 @@ if (!isset($handler) || !$handler)
         </table>
         <script>
             document.getElementById('transactions').scrollTop = 1000000;
+            toggleTransfer(document.getElementById('transfer').checked);
             frequency('<?php echo ($transaction['unit']?$transaction['unit']:0); ?>');
         </script>
     </body>
