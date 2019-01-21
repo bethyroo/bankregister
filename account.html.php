@@ -11,17 +11,18 @@ if (!isset($handler) || !$handler)
 <html>
     <head>
         <title><?php echo $title; ?></title>
+        <link rel="stylesheet" type="text/css" href="main.css">
         <style>
-            body{
-                background-color: #999900;
-                background-image: url(minions.jpg);
-                background-repeat: no-repeat;
-                background-attachment: fixed;
-                background-position: center;
-            }
+            
         </style>
     </head>
-    <body>
+    <body id="account">
+        <div class="nav">
+            <button type="button" onclick="window.location.href = '?page=logout'">Logout</button>
+            <button type="button" onclick="window.location.href = '?page=users'">Manage Users</button>
+            <button type="button" onclick="window.location.href = '?page=import'">Import Transactions</button>
+            <button type="button" onclick="window.location.href = '?'">Transactions</button>
+        </div>
         <form method="post" name="account_form" id="account_form">
             <?php if($action == 'edit') { ?>
             <input type="hidden" name="id" value="<?php echo $account['id']; ?>">
@@ -38,15 +39,15 @@ if (!isset($handler) || !$handler)
             <br>
             <label>Credit Limit:</label>
             <input type="text" name="credit" value="<?php echo $account['credit']; ?>">
-            <br>
-            <input type="submit" name="action" value="save">
+            
+            <button type="submit" name="action" value="save">Save</button>
             <button type="button" onclick="window.location.href = '?page=account'">Cancel</button>
             <?php } else { ?>
             <table>
                 <thead>
                     <tr>
-                        <th>Account</th>
-                        <th colspan="2">Action</th>
+                        <td><h2>Account</h2></td>
+                        <td></td>
                     </tr>
                 </thead>
                 <?php if(!count($accounts_array)) { ?>
@@ -56,16 +57,22 @@ if (!isset($handler) || !$handler)
                 <?php } else { 
                     foreach ($accounts_array as $account) { ?>
                 <tr>
-                    <td><?php echo $account['name']; ?></td>
-                    <td><button type="button" onclick="window.location.href='?page=account&action=edit&aID=<?php echo $account['id']; ?>'">Edit</button></td>
+                    <td><button type="button" onclick="window.location.href='?page=account&action=edit&aID=<?php echo $account['id']; ?>'"><?php echo $account['name']; ?></button></td>
                     <td><button type="button" onclick="window.location.href='?page=account&action=delete&aID=<?php echo $account['id']; ?>'">Delete</button></td>
                 </tr>
                 <?php } ?>
             <?php } ?>
+                <tr>
+                    <td colspan="3">
+                        <button type="button" onclick="window.location.href='?page=account&action=new'">Add New Account</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <button type="button" onclick="window.location.href = '?'">Back</button>
+                    </td>
+                </tr>
             </table>
-            <button type="button" onclick="window.location.href='?page=account&action=new'">Add New Account</button>
-            <br>
-            <button type="button" onclick="window.location.href = '?'">Back</button>
             <?php } ?>
         </form>
         <p class="error"><?php echo $message; ?></p>

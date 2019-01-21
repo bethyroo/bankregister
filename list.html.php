@@ -11,97 +11,7 @@ if (!isset($handler) || !$handler)
 <html>
     <head>
         <title><?php echo $title; ?></title>
-        <style type="text/css">
-            body{
-                background-color: #009999
-            }
-            td {
-                vertical-align: top;
-            }
-            table table td {
-                border-width: 0;
-                border-style: none;
-                border-color: gray;
-                
-            }
-            table table {
-                border-width: 6px;
-                border-style: outset;
-                border-color: gray;
-                border-collapse: collapse;
-            }
-            th, tr.form {
-                border-style: none;
-                background-color: #ffff99;
-                border-width: 0;
-                border-color: #009900;
-            }
-            .edit {
-                border: 3px inset;
-            }
-            .negative {
-                color: maroon;
-            }
-            .odd {
-                background-color: white;
-            }
-            .even {
-                background-color: #ccccff;
-            }
-            .odd.highlight {
-                background-color: #ff9724;
-            }
-            .even.highlight {
-                background-color: #e27906;
-            }
-            .outstanding.even {
-                background-color: #5eb;
-            }
-            .outstanding.odd {
-                background-color: #77ffdd;
-            }
-            .imbalance {
-                color: red;
-            }
-            .statement {
-                background: repeating-linear-gradient(
-                    45deg,
-                    #606dbc,
-                    #606dbc 10px,
-                    #465298 10px,
-                    #465298 20px
-                );
-            }
-            .warning {
-                
-            }
-            .fixed {
-                display:block;
-                width:100%;
-            }
-            .scroll {
-                display: block;
-                max-height:75vh;
-                overflow: auto;
-            }
-            .cell1 {
-                width: 8em;
-            }
-            .cell2 {
-                width: 20em;
-                overflow: hidden;
-            }
-            .cell3 {
-                width: 8em;
-            }
-            .cell4 {
-                width: 8em;
-            }
-            .cell5 {
-                width: 12em;
-            }
-            
-        </style>
+        <link rel="stylesheet" type="text/css" href="main.css">
         <script>
             function toggleTransfer(visible) {
                 if(visible) {
@@ -120,15 +30,17 @@ if (!isset($handler) || !$handler)
             }
         </script>
     </head>
-    <body>
+    <body id="list">
     
         <table>
             <tr>
                 <td colspan="2">
+                    <div class="nav">
                     <button type="button" onclick="window.location.href = '?page=logout'">Logout</button>
                     <button type="button" onclick="window.location.href = '?page=users'">Manage Users</button>
                     <button type="button" onclick="window.location.href = '?page=import'">Import Transactions</button>
                     <button type="button" onclick="window.location.href = '?page=recurring'">Recurring Transactions</button>
+                    </div>
                     <?php echo $message; ?>
                 </td>
             </tr>
@@ -137,18 +49,17 @@ if (!isset($handler) || !$handler)
                     <img src="monkey.gif" style="width:180px;">
                     <form method="get" name="account_form" id="account_form">
                         <?php if(!count($accounts_array)) { ?>
-                            No accounts.
+                        <h2>No accounts.</h2>
                         <?php } else { ?>
-                            <strong>Accounts</strong><br>
+                            <h2>Accounts</h2>
                             <?php foreach ($accounts_array as $account) { $sum += $account['total']; ?>
-                            <input type="radio" name="aID" value="<?php echo $account['id']; ?>"
-                                   <?php if($account['id'] == $aID) echo 'checked="checked"'; ?> 
-                                   onclick="document.getElementById('account_form').submit()"/>
-                                <label><?php echo $account['name'].' ('.$account['total'].')'.' <span class=negative>'.$account['available'].'</span>'; ?></label>
-                                <br>
+                            <button type="submit" name="aID" value="<?php echo $account['id']; ?>"
+                                   <?php if($account['id'] == $aID) echo 'class="selected"'; ?> 
+                                   onclick="document.getElementById('account_form').submit()">
+                                <?php echo $account['name'].' ('.$account['total'].')'.' <span class="available">'.$account['available'].'</span>'; ?>
+                            </button>
                             <?php } ?>
-                                <label>Total all accounts: <?php echo $sum; ?></label>
-                                <br>
+                                <h2>Total all accounts: <?php echo $sum; ?></h2>
                         <?php } ?>
                         <button type="button" onclick="window.location.href='?page=account'">Manage Accounts</button>
                     </form>

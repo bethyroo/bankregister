@@ -11,8 +11,15 @@ if (!isset($handler) || !$handler)
 <html>
     <head>
         <title><?php echo $title; ?></title>
+        <link rel="stylesheet" type="text/css" href="main.css">
     </head>
-    <body>
+    <body id="users">
+        <div class="nav">
+            <button type="button" onclick="window.location.href = '?page=logout'">Logout</button>
+            <button type="button" onclick="window.location.href = '?page=users'">Manage Users</button>
+            <button type="button" onclick="window.location.href = '?page=import'">Import Transactions</button>
+            <button type="button" onclick="window.location.href = '?'">Transactions</button>
+        </div>
         <form method="post" name="user_form" id="account_form">
             <?php if($action == 'edit') { ?>
             <input type="hidden" name="id" value="<?php echo $user['id']; ?>">
@@ -22,29 +29,29 @@ if (!isset($handler) || !$handler)
             <label><?php echo $user['id']?'Change ':'';?>Password:</label>
             <input type="password" name="password">
             <br>
-            <label>Confirm Password:</label>
+            <label>Confirm:</label>
             <input type="password" name="password2">
             <br>
-            <input type="submit" name="action" value="save">
+            <button type="submit" name="action" value="save">Save</button>
             <button type="button" onclick="window.location.href = '?page=users'">Cancel</button>
             <?php } else { ?>
-            <table border="1">
+            <table>
                 <thead>
                     <tr>
-                        <th>Username</th>
-                        <th colspan="2">Action</th>
+                        <td colspan="2"><h2>Users</h2></td>
                     </tr>
                 </thead>
                 <?php if(!count($users_array)) { ?>
                 <tr>
-                    <td>No users.</td>
+                    <td colspan="2">No users.</td>
                 </tr>
                 <?php } else { 
                     foreach ($users_array as $user) { ?>
                 <tr>
-                    <td><?php echo $user['name']; ?></td>
-                    <td>
-                        <button type="button" onclick="window.location.href='?page=users&action=edit&uID=<?php echo $user['id']; ?>'">Edit</button>
+                    <td class="cell2">
+                        <button type="button" onclick="window.location.href='?page=users&action=edit&uID=<?php echo $user['id']; ?>'"><?php echo $user['name']; ?></button>
+                    </td>
+                    <td class="cell1">
                         <button type="button" onclick="window.location.href='?page=users&action=delete&uID=<?php echo $user['id']; ?>'">Delete</button>
                     </td>
                 </tr>

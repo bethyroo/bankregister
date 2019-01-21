@@ -34,21 +34,19 @@ if(isset($_POST['name']) && isset($_POST['password'])) {
 <html>
     <head>
         <title>Our Accounts</title>
+        <link rel="stylesheet" type="text/css" href="main.css">
     </head>
-    <body>
+    <body id="list">
         <h1>Bank Register</h1>
-        <form method="post" action="">
+        <form method="post" action="" id="account_form">
             <label for="name">Username:</label>
             <input type="text" name="name" id="name"/>
             <br>
             <label for="password">Password:</label>
             <input type="password" name="password" id="password"/>
             <br>
-            <input type="submit" name="submit" value="Login"/>
+            <button type="submit" name="submit" value="Login">Login</button>
         </form>
         <p class="error"><?php echo $error; ?></p>
-        Todo: add a form, method of post, with name and password inputs as well as a submit button.
-        Also provide labels for the inputs, and a place to display a login error message.
-        Create a page called list.html.php, with a table, header and 1 row. This will show transactions.
     </body>
 </html>
