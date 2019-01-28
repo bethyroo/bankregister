@@ -6,9 +6,109 @@
     Created on : Jan 21, 2019, 3:43:37 PM
     Author     : Joe Rothrock <rothrockindustries@gmail.com>
 */
-
-body#list {
+/* Reset defaults */
+html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p,
+blockquote, pre, abbr, address, cite, code, del, dfn, em, img, ins,
+kbd, q, samp, small, strong, sub, sup, var, b, i, dl, dt, dd, ol,
+ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot,
+thead, tr, th, td, article, aside, canvas, details, figcaption,
+figure, footer, header, hgroup, menu, nav, section, summary, time,
+mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    font-size: 100%;
+    vertical-align: baseline;
+    background: transparent;
+}
+/* Format login page */
+#login input {
+    font-size: 1.5em;
+    height: 2em;
+    display: block;
+    max-width: 100%;
+    float: left;
+    clear: both;
+}
+#login label {
+    font-size: 1.5em;
+    display: block;
+    float: left;
+    clear: both;
+    color: white;
+    font-weight: bold;
+}
+#login button {
+    padding: .5em;
+    margin-top: 5em;
+    width: 10em;
+    display: block;
+    background: linear-gradient(
+        #009999,
+        #008888 49%,
+        #007777 51%,
+        #006666
+    );
+    border: none;
+    box-shadow: 0 2px 4px black;
+    color: white;
+    font-size: 1.5em;
+    font-weight: bold;
+    text-shadow: 0 -1px rgba(0,0,0,.5);
+    clear: both;
+}
+body#login {
     background-color: #009999
+}
+/* Menu */
+#menu-bar {
+}
+#menu-bar li {
+    display: block;
+    float: right;
+    margin: .2em;
+}
+#nav {
+    display: block;
+    height: 3em;
+    width: 100%;
+    background: linear-gradient(
+        #009999,
+        #008888 49%,
+        #007777 51%,
+        #006666
+    );
+    border-bottom: 1px #441d22 solid;
+    z-index:100;
+}
+#nav li {
+    display: inline-block;
+    background-color: #009999;
+    float: left;
+    padding: .5em;
+    margin: .2em;
+    border: 1px solid #336666;
+    border-radius: 5px;
+}
+#nav li:hover {
+    background-color: #006666;
+    border: inset;
+}
+#nav a {
+    display: block;
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+#nav li a img {
+    display: none;
+}
+
+/* Format for other pages */
+body#list {
+    background-color: #009999;
+    clear: right;
 }
 body#recurring {
     background-color: #bb2222;
@@ -26,13 +126,13 @@ body#users {
 td {
     vertical-align: top;
 }
-table table td {
+table.items td {
     border-width: 0;
     border-style: none;
     border-color: gray;
     vertical-align: middle;
 }
-table table {
+table.items {
     border-width: 6px;
     border-style: outset;
     border-color: gray;
@@ -121,6 +221,9 @@ th, tr.form {
     margin: 2px;
     
 }
+#account_form label {
+    float: left;
+}
 #account_form {
     max-width: 20em;
     background-color: #009999;
@@ -169,6 +272,8 @@ th, tr.form {
     padding: 5px;
     display: inline-block;
     border-radius: 5px;
+    
+    float: left;
 }
 .nav button {
     padding: 10px;
@@ -186,6 +291,70 @@ th, tr.form {
     font-weight: bold;
     text-shadow: 0 -1px rgba(0,0,0,.5);
 }
+
+.accounts {
+    float: left;
+    clear: left;
+}
+.list{
+    float: left;
+}
 .available {
     color: yellow;
+}
+#list_item img {
+    display: none;
+}
+#list_item {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 20em;
+    border-right: 1px #006666 solid;
+    float: left;
+}
+#list_item li {
+    display: block;
+    margin: 0 !important;
+    padding: 0;
+    width: 100%;
+    background-color: #009999;
+    border-bottom: 1px #006666 solid;
+    border-top: 1px #22aaaa solid;
+    box-shadow: 0 2px 4px black;
+    color: gold;
+    font-weight: bold;
+    min-height: 2em;
+    vertical-align: middle;
+}
+#list_item li.selected {
+    background-color: #006699;
+}
+#list_item li:hover {
+    background-color: #22aaaa;
+}
+#list_item a {
+    padding-left: .5em;
+    padding-top: .1em;
+    display: inline-block;
+    width:100%;
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+    text-shadow: 0 -1px rgba(0,0,0,.5);
+    text-align: left;
+    vertical-align: middle;
+    overflow: ellipsis;
+    clear:none;
+    min-height: 2em;
+    font-size: 1.2em;
+}
+#list_item a .balance {
+    font-size: .6em;
+    overflow: ellipsis;
+}
+#list_item a .available {
+    font-size: .6em;
+    color: gold;
+    text-align: right;
 }

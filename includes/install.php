@@ -52,6 +52,10 @@ function install() {
         $db->query('ALTER TABLE accounts ADD `credit` float(10,2) NOT NULL DEFAULT 0.00');
     }
     write_config('VERSION', $version);
+    // switch between desktop/mobile versions
+    if(isset($_REQUEST['mobile'])) {
+        $_SESSION['mobile'] = $_REQUEST['mobile']=='1';
+    }
 }
 
 function init() {

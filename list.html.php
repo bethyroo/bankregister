@@ -10,8 +10,11 @@ if (!isset($handler) || !$handler)
 ?>
 <html>
     <head>
-        <title><?php echo $title; ?></title>
-        <link rel="stylesheet" type="text/css" href="main.css">
+        <meta name="viewport" content="width=device-width, minimum-scale=1,maximum-scale=1, user-scalable=no">
+        <link rel="apple-touch-icon-precomposed" href="http://<?php echo $_SERVER['SERVER_NAME']. dirname($_SERVER['PHP_SELF']); ?>/apple-touch-icon-precomposed.png"/>
+        <link rel="shortcut icon" href="favicon.ico" />
+        <link rel="stylesheet" type="text/css" href="<?php echo $_SESSION['mobile']?'mobile.css':'main.css'; ?>">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script>
             function toggleTransfer(visible) {
                 if(visible) {
@@ -29,42 +32,14 @@ if (!isset($handler) || !$handler)
                 item.classList.toggle('highlight');
             }
         </script>
+        <title><?php echo $title; ?></title>
     </head>
     <body id="list">
-    
-        <table>
-            <tr>
-                <td colspan="2">
-                    <div class="nav">
-                    <button type="button" onclick="window.location.href = '?page=logout'">Logout</button>
-                    <button type="button" onclick="window.location.href = '?page=users'">Manage Users</button>
-                    <button type="button" onclick="window.location.href = '?page=import'">Import Transactions</button>
-                    <button type="button" onclick="window.location.href = '?page=recurring'">Recurring Transactions</button>
-                    </div>
-                    <?php echo $message; ?>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="monkey.gif" style="width:180px;">
-                    <form method="get" name="account_form" id="account_form">
-                        <?php if(!count($accounts_array)) { ?>
-                        <h2>No accounts.</h2>
-                        <?php } else { ?>
-                            <h2>Accounts</h2>
-                            <?php foreach ($accounts_array as $account) { $sum += $account['total']; ?>
-                            <button type="submit" name="aID" value="<?php echo $account['id']; ?>"
-                                   <?php if($account['id'] == $aID) echo 'class="selected"'; ?> 
-                                   onclick="document.getElementById('account_form').submit()">
-                                <?php echo $account['name'].' ('.$account['total'].')'.' <span class="available">'.$account['available'].'</span>'; ?>
-                            </button>
-                            <?php } ?>
-                                <h2>Total all accounts: <?php echo $sum; ?></h2>
-                        <?php } ?>
-                        <button type="button" onclick="window.location.href='?page=account'">Manage Accounts</button>
-                    </form>
-                </td>
-                <td>
+        <?php include "nav.html.php"; ?>
+        <?php if(!$_SESSION['mobile']) { include 'account_list.html.php'; ?>
+        <div id="content">      
+        <?php echo $message; ?>
+        <div class="list">
                     <?php if($recurring) { ?>
                     <span id="recurring">
                         There are <?php echo $recurring; ?> recurring transactions. 
@@ -74,7 +49,7 @@ if (!isset($handler) || !$handler)
                     <?php } ?>
                     <form method="post" action="index.php">
                         <input type="hidden" name="aID" value="<?php echo $aID; ?>">
-                        <table>
+                        <table class="items">
                         <thead class="fixed">
                             <th class="cell1">Date</th>
                             <th class="cell2">description</th>
@@ -166,14 +141,158 @@ if (!isset($handler) || !$handler)
                         </tbody>
                     </table>
                     </form>
-              </td>
-            </tr>
-        </table>
+              </div>
+        </div>
         <script>
             // scroll to selected or last row
             document.getElementById('row_<?php echo $transaction['id']?$transaction['id']:$row['id']; ?>').scrollIntoView();
             // select description fields
             document.getElementById('description').focus();
         </script>
+        <?php } else {// mobile version ?>
+        <span id="title"><?php echo ($aID)?'Account: '.account_name($aID):''; ?></span>
+        <div id="content">
+        <?php if(isset($transaction['id'])) {// add/edit ?>
+            <form name="transaction" action="<?php echo query_string(array('id', 'action')); ?>" method="post">
+                <button type="button" onclick="window.location.href='<?php echo query_string(array('action', 'id')); ?>'">Back</button>
+                <input type="hidden" name="id" value="<?php echo $transaction['id']; ?>">
+                
+                <input type="date" name="tran_date" value="<?php echo (isset($transaction['tran_date'])?$transaction['tran_date']:date('Y-m-d')); ?>">
+                
+                <input type="text" id="description" name="description" value="<?php echo $transaction['description']; ?>" size="30" placeholder="Description">
+                <!-- Transfer form -->
+                <select name="how" id="how" style="display:none;">
+                    <option value="1" selected="selected">To</option>
+                    <option value="0">From</option>
+                </select>
+                <select name="to" id="to" style="display:none;">
+                    <?php foreach($accounts_array as $account) { 
+                        echo '<option value="'.$account['id'].'"'.($account['id']==$aID?' selected="selected"':'').'>'.$account['name'].'</option>';
+                    }
+                    ?>
+                </select>
+                <!-- End transfer form -->
+                <?php if($transaction['id'] && !$transaction['link']) { ?>
+                <select name="account">
+                    <?php foreach($accounts_array as $account) { 
+                        echo '<option value="'.$account['id'].'"'.($account['id']==$aID?' selected="selected"':'').'>'.$account['name'].'</option>';
+                    }
+                    ?>
+                </select>
+                <?php } else { ?>
+                <input type="hidden" name="account" value="<?php echo $aID; ?>">
+                <?php } ?>
+                <input type="text" name="value" value="<?php echo $transaction['value']; ?>" placeholder="$ 0.00" size="8">
+                <label id="outstanding_label">Outstanding</label>
+                <input type="checkbox" name="outstanding" id="outstanding" value="1"<?php echo ($transaction['outstanding']||!$transaction['id']?'checked=checked':''); ?> size="8">
+                <button type="submit" name="action" value="<?php echo $transaction['id']?'save':'add';?>">Save</button>
+                <?php if($transaction['id']) { ?>
+                <button type="submit" name="action" value="delete">Delete</button>
+                <?php } else { ?>
+                <input type="hidden" name="transfer" id="transfer" value="0">
+                <?php } ?>
+                <br>
+                <input type="hidden" name="statement" id="statement" value="<?php if($transaction['statement']) echo '1';?>">
+            </form>
+            <?php if(!$transaction['id']) { ?>
+            <ul id="mode">
+                <li><a href="#transfer">Transfer</a></li>
+                <li class="selected"><a href="#normal">Normal</a></li>
+                <li><a href="#statement">Statement</a></li>
+            </ul>
+            <?php } ?>
+            <script>
+                $('#mode a').click(function (e){
+                    e.preventDefault();
+                    $('#mode li').removeClass('selected');
+                    $(this).parent('li').addClass('selected');
+                    // now change parameters as needed
+                    switch(e.target.hash) {
+                        case '#transfer':
+                            document.getElementById('description').style.display = 'none';
+                            document.getElementById('to').style.display = '';
+                            document.getElementById('how').style.display = '';
+                            document.getElementById('outstanding').style.display = '';
+                            document.getElementById('outstanding_label').style.display = '';
+                            document.getElementById('statement').value = '0';
+                            document.getElementById('transfer').value = '1';
+                            break;
+                        case '#statement':
+                            document.getElementById('description').value = 'Statement';
+                            document.getElementById('outstanding').style.display = 'none';
+                            document.getElementById('outstanding_label').style.display = 'none';
+                            document.getElementById('statement').value = '1';
+                        case '#normal':
+                            document.getElementById('transfer').value = '0';
+                            document.getElementById('description').style.display = '';
+                            document.getElementById('to').style.display = 'none';
+                            document.getElementById('how').style.display = 'none';
+                            if(e.target.hash == '#normal') {
+                                document.getElementById('outstanding').style.display = '';
+                                document.getElementById('outstanding_label').style.display = '';
+                                document.getElementById('statement').value = '0';
+                            }
+                    }
+                });
+            </script>
+        <?php } else {// list transactions ?>
+            <ul id="list_item">
+                <!-- back button -->
+                <li>
+                    <a href="<?php echo query_string(array('aID', 'q')); ?>">Back</a>
+                </li>
+                <?php if($recurring) {// recurring transactions ?>
+                    <li id="recurring">
+                        <a href="?page=recurring&action=perform">
+                        Perform <?php echo $recurring; ?> recurring transactions
+                        <img src="arrow.png">
+                        </a>
+                    </li>
+                <?php }// end recurring ?>
+                    <li id="new">
+                        <a href="<?php echo query_string(array(), array('action'=> 'new')); ?>">
+                        Add New
+                        <img src="arrow.png">
+                        </a>
+                    </li>
+                <?php if($_REQUEST['limit']) {// add link to previous ?>
+                    <li>
+                        <a href="<?php echo query_string(array(), array('limit'=> ($_REQUEST['limit']-30>0?$_REQUEST['limit']-30:0))); ?>">
+                            Load Previous 30
+                        </a>
+                    </li>
+                <?php }// end limit ?>
+                <?php foreach($transactions as $row) {
+                    $class = '';
+                    if($row['statement']) $class = 'statement';
+                    if($row['outstanding']) $class = 'outstanding';
+                    if($row['value']<0) $class .= ' negative';
+                ?>
+                    <li class="<?php echo $class; ?>">
+                        <a href="<?php echo query_string(array(), array('id' => $row['id'],'action'=>'edit')); ?>">
+                            <?php echo date('m/d/y',strtotime($row['tran_date'])) ?>
+                            <span class="amount">$<?php echo money_format('%#10n', $row['value']); ?></span>
+                            <br>
+                            <span class="description"><?php echo $row['description']; ?></span>
+                            <?php if(!$aID) { ?>
+                            <br>
+                            <span class="account">(<?php echo $row['name']; ?>)</span>
+                            <?php } ?>
+                            <img src="arrow.png">
+                        </a>
+                    </li>
+                <?php }// end foreach ?>
+                    <!-- add link to next -->
+                    <?php if($more) { ?>
+                    <li>
+                        <a href="<?php echo query_string(array(), array('limit'=> $_REQUEST['limit']+30)); ?>">
+                            Load Next 30
+                        </a>
+                    </li>
+                    <?php }// end if more ?>
+            </ul>
+            <?php }// end list ?>
+        </div>
+        <?php } ?>
     </body>
 </html>

@@ -49,6 +49,44 @@ function write_config($name, $value) {
         $db->query('insert into configuration (`key`, `value`) values ("'.$name.'", "'.$value.'")');
     }
 }
+
+function query_string($exclude = array(), $add = array()) {
+    $return = '?';
+    foreach($_GET as $key => $value) {
+        if(in_array($key, $exclude)) continue;
+        if(array_key_exists($key, $add)) continue;
+        $return .= $key.'='.$value.'&';
+    }
+    // now add additional parameters
+    foreach($add as $key=>$value) $return .= $key.'='.$value.'&';
+    //echo $return;
+    if($return == '?') return '.';
+    $return = substr($return,0,-1);
+    return $return;
+}
+/*********************************************************************
+ * Search Functions                                                 *
+ ********************************************************************/
+function search_string($table) {
+    $q = $_REQUEST['q'];
+    if(!$q) return '';
+    // build search string based on table and search parameter
+    switch($table) {
+        case 'transactions':
+            return ' and (description like"%'.$q.'%" or value = '.floatval($q).')';
+            break;
+        case 'user':
+            return ' and name like "%'.$q.'%"';
+            break;
+        case 'recurring':
+            return ' and (description like"%'.$q.'%" or value = '.floatval($q).')';
+            break;
+        case 'accounts':
+            return ' and name like"%'.$q.'%"';
+            break;
+    }
+    return '';
+}
 /*********************************************************************
  * Account Functions                                                *
  ********************************************************************/
@@ -66,6 +104,7 @@ function get_accounts($aID = null) {
             . '(select sum(`value`) from transactions s where s.account = a.id and s.tran_date < now() and s.statement = "0") as available'
             . ' from accounts a';
     if($aID) $sql .= ' where a.id = '.$aID;
+    $sql .= search_string('accounts');
     $result = $db->query($sql);
     $i = 0;
     if($result->num_rows) while($row = $result->fetch_assoc()) {
@@ -100,6 +139,16 @@ function get_account_by_name($name, $create = false) {
     return false;
 }
 
+function account_name($id) {
+    global $db;
+    $result = $db->query('select name from accounts where id = '.(int)$id);
+    if($result->num_rows) {
+        $row = $result->fetch_assoc();
+        return $row['name'];
+    }
+    return false;
+}
+
 function add_account($name) {
     $data['name'] = $name;
     $data['type'] = 'bank';
@@ -126,19 +175,41 @@ function delete_account($aID) {
 /*********************************************************************
  * Transaction Functions                                            *
  ********************************************************************/
-function get_transactions($aID) {
+function get_transactions($aID, $statement = false) {
     global $db;
     $return = array();
-    $sql = 'select * from transactions where account = '.(int)$aID.' order by tran_date, id';
+    $sql = 'select transactions.*, accounts.name from transactions join accounts on transactions.account = accounts.id where 1';
+    if($aID) $sql .= ' and account = '.(int)$aID;
+    $sql .= search_string('transactions');
+    if($statement) $sql .= ' and (tran_date > (select max(tran_date) from transactions t where t.statement = "1") or outstanding = "1")';
+    if($_SESSION['mobile'] && !$statement) {
+        $sql .=' order by tran_date desc, transactions.id desc limit '.(int)$_REQUEST['limit'].',30';
+    } else {
+        $sql .=' order by tran_date, transactions.id';
+    }
+    //echo $sql;
     $result = $db->query($sql);
     $i = 0;
     if($result->num_rows) while($row = $result->fetch_assoc()) {
         foreach($row as $key => $value) {
             $return[$i][$key] = $value;
         }
+        if($return[$i]['statement']) $return[$i]['description'] = 'Statement Balance';
         $i++;
     }
     return $return;
+}
+
+function check_limit($aID) {
+    global $db;
+    $sql = 'select count(*) as items from transactions where account = '.(int)$aID;
+    $sql .= search_string('transactions');
+    $result = $db->query($sql);
+    if($result->num_rows) {
+        $row = $result->fetch_assoc();
+        if($row['items'] > ((int)$_REQUEST['limit']+30)) return true;
+    }
+    return false;
 }
 
 function save_transaction($source, $id = 0){
@@ -148,8 +219,9 @@ function save_transaction($source, $id = 0){
     $data['description'] = $source['description'];
     $data['tran_date'] = $source['tran_date'];
     $data['value'] = $source['value'];
-    $data['outstanding'] = isset($source['outstanding'])?'1':'0';
-    $data['statement'] = isset($source['statement'])?'1':'0';
+    $data['outstanding'] = $source['outstanding']=='1'?'1':'0';
+    $data['statement'] = $source['statement']=='1'?'1':'0';
+    if($data['statement']) $data['outstanding'] = '0';
     // check if a transfer
     if(isset($source['transfer']) && $source['transfer'] == '1') {
         $to = get_accounts($source['to'])[0];
@@ -245,6 +317,7 @@ function get_recurring($aID) {
     global $db;
     $return = array();
     $sql = 'select * from recurring where account = '.(int)$aID.' order by id';
+    $sql .= search_string('recurring');
     $result = $db->query($sql);
     $i = 0;
     if($result->num_rows) while($row = $result->fetch_assoc()) {
@@ -447,7 +520,8 @@ function perform_recurring() {
 function get_users($id = 0) {
     global $db;
     $return = array();
-    $sql = 'select * from users order by name';
+    $sql = 'select * from users';
+    $sql .= search_string('users');
     if($id) $sql .= ' where id = '.(int)$id;
     $result = $db->query($sql);
     $i = 0;

@@ -22,9 +22,6 @@ switch($action) {
             $action = 'edit';
         }
         break;
-    case 'edit':
-        $temp = get_accounts($aID);
-        $account = $temp[0];
     case 'new':
         $action = 'edit';
         break;
@@ -36,6 +33,11 @@ switch($action) {
             $message = 'Accounts with a balance cannot be deleted.';
         }
         break;
+    case 'edit':
+    default:
+        $temp = get_accounts($aID);
+        $account = $temp[0];
+        if($aID && $account['id']) $action = 'edit';
 }
 $title = 'Manage Accounts';
 $page = 'account.html.php';
