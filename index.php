@@ -46,6 +46,12 @@ switch($_REQUEST['page']) {
     case 'recurring':
         require 'recurring.php';
         break;
+    case 'statement':
+        require 'statement.php';
+        break;
+    case 'ajax':
+        require 'ajax.php';
+        exit;
     default:
         require 'list.php';
 }

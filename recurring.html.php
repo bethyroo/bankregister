@@ -43,12 +43,12 @@ if (!isset($handler) || !$handler)
                 if(visible) {
                     document.getElementById('description').style.display = 'none';
                     document.getElementById('to').style.display = '';
-                    document.getElementById('how').style.display = '';
+                    document.getElementById('to_label').style.display = '';
                     
                 } else {
                     document.getElementById('description').style.display = '';
                     document.getElementById('to').style.display = 'none';
-                    document.getElementById('how').style.display = 'none';
+                    document.getElementById('to_label').style.display = 'none';
                 }
             }
             function frequency(unit) {
@@ -77,9 +77,10 @@ if (!isset($handler) || !$handler)
     </head>
     <body id="recurring">
     <?php include "nav.html.php"; ?>
+        ToDo: add mobile support.
     <?php echo $message; ?>
-    <?php if(!$_SESSION['mobile']) include 'account_list.html.php'; ?>
     <div class="list">
+        <?php if(!$_SESSION['mobile']) { ?>
         <form method="post" action="index.php?page=recurring">
             <input type="hidden" name="aID" value="<?php echo $aID; ?>">
             <table class="items">
@@ -152,7 +153,7 @@ if (!isset($handler) || !$handler)
                         <input type="hidden" name="account" value="<?php echo $aID; ?>">
                         <?php } ?>
                         <!-- Transfer form -->
-                        <label>From:</label>
+                        <label id="to_label">From:</label>
                         <select name="to" id="to" style="display:none;">
                             <?php foreach($accounts_array as $account) { 
                                 echo '<option value="'.$account['id'].'"'.($account['id']==$transaction['to']?' selected="selected"':'').'>'.$account['name'].'</option>';
@@ -173,11 +174,139 @@ if (!isset($handler) || !$handler)
             </tfoot>
         </table>
         </form>
-  </div>
         <script>
             document.getElementById('transactions').scrollTop = 1000000;
             toggleTransfer(document.getElementById('transfer').checked);
             frequency('<?php echo ($transaction['unit']?$transaction['unit']:0); ?>');
         </script>
+        <?php } else {// mobile ?>
+        <span id="title"><?php echo ($aID)?'Recurring. Account: '.account_name($aID):''; ?></span>
+        <div id="content">
+        <?php if(isset($transaction['id'])) {// add/edit ?>
+            <form name="transaction" action="<?php echo query_string(array('id', 'action')); ?>" method="post">
+                <button type="button" onclick="window.location.href='<?php echo query_string(array('action', 'id')); ?>'">Back</button>
+                <input type="hidden" name="id" value="<?php echo $transaction['id']; ?>">
+                <label id="increment_label">Every:</label>
+                        <select name="increment" id="increment">
+                            <?php for($i = 1;$i < 32;$i++)
+                            echo '<option value="'.$i.'">'.$i.'</option>'; ?>
+                        </select>
+                        <select name="unit" id="unit" onchange="frequency(this.value)">
+                            <?php foreach($frequency_unit as $key => $value) 
+                                echo '<option value="'.$key.'"'.($transaction['unit'] == $key?'selected="selected"':'').'>'.$value.'</option>'; ?>
+                        </select>
+                        <label id="on_label">On</label>
+                        <select name="weekday" id="weekday">
+                            <?php foreach($frequency_days as $key => $value)
+                                echo '<option value="'.$key.'" '.($transaction['weekday']==$key?'selected="selected"':'').'>'.$value.'</option>'; ?>
+                        </select>
+                        <label id="weekend_label">Adjust date if weekend:</label>
+                        <select name="weekend" id="weekend">
+                            <?php foreach($frequency_weekend as $key => $value)
+                                echo '<option value="'.$key.'" '.($transaction['weekend'] == $key?'selected="selected"':'').'>'.$value.'</option>'; ?>
+                        </select>
+                        <br>
+                        <label>Starting</label>
+                        <input type="date" name="start" value="<?php echo ($transaction['start']?$transaction['start']:date('Y-m-d')); ?>">
+                        <!-- end recurring frequency -->
+                        <input type="text" id="description" name="description" value="<?php echo $transaction['description']; ?>" size="30" placeholder="Description">
+                        <!-- Primary Account id -->
+                        <?php if($transaction['id'] && !$transaction['link']) { ?>
+                        <select name="account">
+                            <?php foreach($accounts_array as $account) { 
+                                echo '<option value="'.$account['id'].'"'.($account['id']==$transaction['account']?' selected="selected"':'').'>'.$account['name'].'</option>';
+                            }
+                            ?>
+                        </select>
+                        <?php } else { ?>
+                        <input type="hidden" name="account" value="<?php echo $aID; ?>">
+                        <?php } ?>
+                        <!-- Transfer form -->
+                        <label id="to_label">From:</label>
+                        <select name="to" id="to" style="display:none;">
+                            <?php foreach($accounts_array as $account) { 
+                                echo '<option value="'.$account['id'].'"'.($account['id']==$transaction['to']?' selected="selected"':'').'>'.$account['name'].'</option>';
+                            }
+                            ?>
+                        </select>
+                        <!-- End transfer form -->
+                        <input type="text" name="value" value="<?php echo $transaction['value']; ?>" placeholder="$ 0.00" size="8">
+                        
+                
+                <button type="submit" name="action" value="<?php echo $transaction['id']?'save':'add';?>">Save</button>
+                <?php if($transaction['id']) { ?>
+                <button type="submit" name="action" value="delete">Delete</button>
+                <?php } ?>
+                <input type="hidden" name="transfer" id="transfer" value="<?php echo $transaction['transfer']?'1':'0'; ?>">
+            </form>
+            <ul id="mode" class="double">
+                <li<?php echo !$transaction['transfer']?' class="selected"':''; ?>><a href="#normal">Normal</a></li>
+                <li<?php echo $transaction['transfer']?' class="selected"':''; ?>><a href="#transfer">Transfer</a></li>
+            </ul>
+            
+        <script>
+            toggleTransfer(document.getElementById('transfer').value == '1');
+            frequency('<?php echo ($transaction['unit']?$transaction['unit']:0); ?>');
+            $('#mode a').click(function (e){
+                e.preventDefault();
+                $('#mode li').removeClass('selected');
+                $(this).parent('li').addClass('selected');
+                // now change parameters as needed
+                switch(e.target.hash) {
+                    case '#transfer':
+                        document.getElementById('transfer').value = '1';
+                        toggleTransfer(true);
+                        break;
+                    case '#normal':
+                        document.getElementById('transfer').value = '0';
+                        toggleTransfer(false);
+                }
+            });
+        </script>
+        <?php } else {// list transactions ?>
+            <ul id="list_item">
+                <!-- back button -->
+                <li>
+                    <a href="<?php echo query_string(array('aID', 'q')); ?>">Back</a>
+                </li>
+                <li id="new">
+                    <a href="<?php echo query_string(array(), array('action'=> 'new')); ?>">
+                    Add New
+                    <img src="arrow.png">
+                    </a>
+                </li>
+                
+                <?php $total = 0;
+            foreach($transactions as $row) {
+                $total += $row['value'];
+                $row_last = $row['id'];
+                $odd = !$odd; 
+                $class = $odd?'odd':'even';
+                if($row['outstanding']) $class .= ' outstanding';
+                if($row['value'] < 0) $class .= ' negative';
+                if($total < 0 && $account_info['type'] == 'bank') $class .= ' warning';
+                ?>
+                    <li class="<?php echo $class; ?>">
+                        <a href="<?php echo query_string(array(), array('id' => $row['id'],'action'=>'edit')); ?>">
+                            <?php echo $row['text']; ?>
+                            <span class="amount">$<?php echo money_format('%#10n', $row['value']); ?></span>
+                            <br>
+                            <span class="description"><?php echo $row['description']; ?></span>
+                            <br>
+                            <span class="balance">Next: <?php echo date('m/d/Y', strtotime($row['next'])); ?></span>
+                            
+                            <?php if(!$aID) { ?>
+                            <br>
+                            <span class="account">(<?php echo $row['name']; ?>)</span>
+                            <?php } ?>
+                            <img src="arrow.png">
+                        </a>
+                    </li>
+                <?php }// end foreach ?>
+            </ul>
+            <?php }// end list ?>
+        </div>
+        <?php }// end mobile ?>
+  </div>
     </body>
 </html>

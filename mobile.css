@@ -61,7 +61,7 @@ body {
 /* set default positioning */
 #menu-bar a {
     display: block;
-    margin: 0.4em; /* 10px / 12px */
+    margin: 0.3em; /* 10px / 12px */
     overflow: hidden;
     padding-top: 0.4em; /* 6px / 14px */
     position: relative;
@@ -78,7 +78,7 @@ body {
 }
 
 #menu-bar input {
-    margin-top: .2em;
+    margin-top: .3em;
     padding-top: 0;
     height: 2em;
 }
@@ -94,10 +94,10 @@ body {
 }
 #search a:after {
     content: url("icons.png");
-    clip: rect(6px 160px 68px 100px);
+    clip: rect(4px 160px 68px 100px);
     left: 50%;
     margin-left: -133px;
-    margin-top: -18px;
+    margin-top: -28px;
     position: absolute;
     transform: scale(.5,.5);
 }
@@ -206,6 +206,9 @@ body {
 #list_item li.outstanding {
     background-color: #606dbc;
 }
+#list_item li.marked {
+    background-color: #ccccff;
+}
 #list_item li.empty {
     padding-top: .3em;
     padding-left: .5em;
@@ -272,6 +275,19 @@ body {
     margin-right: 1em;
     transform: scale(.5,.5);
     z-index: 0;
+}
+#list_item a.inline {
+    width: 2em;
+    height: auto;
+    margin-top: 0;
+    float: right;
+    background-color: #11AAAA;
+}
+#list_item a.inline img {
+    margin-right: .5em;
+}
+#list_item a.statement {
+    width: 75%;
 }
 #content {
     padding-top: 3.5em;
@@ -354,6 +370,9 @@ ul#mode {
     background-color: #0000ff;
     vertical-align: middle;
     z-index: 1;
+}
+#mode.double li {
+    width: 50%;
 }
 #mode li a {
     padding-top: 1em;

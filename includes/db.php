@@ -181,7 +181,7 @@ function get_transactions($aID, $statement = false) {
     $sql = 'select transactions.*, accounts.name from transactions join accounts on transactions.account = accounts.id where 1';
     if($aID) $sql .= ' and account = '.(int)$aID;
     $sql .= search_string('transactions');
-    if($statement) $sql .= ' and (tran_date > (select max(tran_date) from transactions t where t.statement = "1") or outstanding = "1")';
+    if($statement) $sql .= ' and outstanding <> "0"';
     if($_SESSION['mobile'] && !$statement) {
         $sql .=' order by tran_date desc, transactions.id desc limit '.(int)$_REQUEST['limit'].',30';
     } else {
@@ -197,13 +197,27 @@ function get_transactions($aID, $statement = false) {
         if($return[$i]['statement']) $return[$i]['description'] = 'Statement Balance';
         $i++;
     }
+    // now add statement row
+    if($statement) {
+        $sql = 'select transactions.*, accounts.name from transactions join accounts on transactions.account = accounts.id where account = '.(int)$aID
+                .' and statement = "1" order by tran_date desc limit 1';
+        $result = $db->query($sql);
+        if($result->num_rows) {
+            $row = $result->fetch_assoc();
+            foreach($row as $key => $value) {
+                $return[$i][$key] = $value;
+            }
+            $return[$i]['description'] = 'Statement Balance';
+        }
+    }
     return $return;
 }
 
-function check_limit($aID) {
+function check_limit($aID, $statement = false) {
     global $db;
     $sql = 'select count(*) as items from transactions where account = '.(int)$aID;
     $sql .= search_string('transactions');
+    if($statement) $sql .= ' and outstanding = "1"';
     $result = $db->query($sql);
     if($result->num_rows) {
         $row = $result->fetch_assoc();
@@ -310,6 +324,31 @@ function delete_transaction($id) {
     $db->rollback();
     return false;
 }
+function update_outstanding($id, $out) {
+    if(!(int)$id) return false;
+    $data = array();
+    $data['outstanding'] = (int)$out;
+    return db_perform('transactions', $data,'update','id='.(int)$id);
+}
+function finalize_outstanding($aid) {
+    if(!(int)$aid) return false;
+    $data = array();
+    $data['outstanding'] = 0;
+    return db_perform('transactions', $data,'update','account='.(int)$aid.' and outstanding = "2"');
+}
+
+function check_balance($aID) {
+    global $db;
+    // get total and statement
+    $sql = 'select sum(value) as `total`, '
+            . '(select value from transactions t where statement = "1" and account = '.(int)$aID.' order by tran_date desc limit 1) as statement'
+            . ' from transactions where statement = "0" and outstanding <> "1" and account = '.(int)$aID;
+    //echo $sql;
+    $result = $db->query($sql);
+    $row = $result->fetch_assoc();
+    return $row;
+}
+
 /*********************************************************************
  * Recurring Functions                                              *
  ********************************************************************/
@@ -336,7 +375,10 @@ function save_recurring($id = 0){
     $data['account'] = $_REQUEST['account'];
     $data['description'] = $_REQUEST['description'];
     $data['value'] = $_REQUEST['value'];
-    $data['transfer'] = isset($_REQUEST['transfer'])?'1':'0';
+    $data['transfer'] = isset($_REQUEST['transfer']) && $_REQUEST['transfer']?'1':'0';
+    if($data['transfer']) {
+        $data['description'] = 'Transfer';
+    }
     $data['frequency'] = serialize_frequency();
     $data['next'] = calculate_next($data);
     $result = db_perform('recurring', $data, ($id?'update':'insert'),($id?' id='.$id:''));
@@ -503,6 +545,7 @@ function perform_recurring() {
         $data = $row;
         $data = unserialize_frequency($data);
         $data['tran_date'] = $data['next'];
+        $data['outstanding'] = '1';
         while(strtotime($data['tran_date']) < time()) {
             save_transaction($data);
             $data['tran_date'] = calculate_next($data, $data['tran_date']);

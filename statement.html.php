@@ -150,7 +150,7 @@ if (!isset($handler) || !$handler)
             document.getElementById('description').focus();
         </script>
         <?php } else {// mobile version ?>
-        <span id="title"><?php echo ($aID)?$account_info['name'].' $'.$account_info['total']:''; ?></span>
+        <span id="title"><?php echo ($aID)?'Account: '.account_name($aID):''; ?></span>
         <div id="content">
         <?php if(isset($transaction['id'])) {// add/edit ?>
             <form name="transaction" action="<?php echo query_string(array('id', 'action')); ?>" method="post">
@@ -236,6 +236,38 @@ if (!isset($handler) || !$handler)
                             }
                     }
                 });
+                $('.statement').addClass('marked');
+                $('#list_item a.statement').click(function(e) {
+                    e.preventDefault();
+                    console.log('Mark');
+                    var id = e.target.hash;
+                    var out = $(this).parent('li').hasClass('marked')?'1':'2';
+                    $.ajax({
+                        url: "",
+                        type: 'post',
+                        data: {
+                            page: 'ajax',
+                            action: 'outstanding',
+                            id: id,
+                            outstanding: out 
+                        },
+                        success: function(result) {
+                            xml = $.parseXML(result);
+                            switch($(xml).find('outstanding').text()) {
+                                case '1':
+                                    $('a[href="#'+$(xml).find('id').text()+'"').parent('li').removeClass('marked');
+                                break;
+                                case '2':
+                                    $('a[href="#'+$(xml).find('id').text()+'"').parent('li').addClass('marked');
+                                break;
+                                case '0':
+                                    $('a[href="#'+$(xml).find('id').text()+'"').parent('li').removeClass('marked');
+                                    $('a[href="#'+$(xml).find('id').text()+'"').parent('li').removeClass('outstanding');
+                                break;
+                            }
+                        }
+                    });
+                });
             </script>
         <?php } else {// list transactions ?>
             <ul id="list_item">
@@ -257,21 +289,19 @@ if (!isset($handler) || !$handler)
                         <img src="arrow.png">
                         </a>
                     </li>
-                <?php if($_REQUEST['limit']) {// add link to previous ?>
-                    <li>
-                        <a href="<?php echo query_string(array(), array('limit'=> ($_REQUEST['limit']-30>0?$_REQUEST['limit']-30:0))); ?>">
-                            Load Previous 30
-                        </a>
-                    </li>
-                <?php }// end limit ?>
                 <?php foreach($transactions as $row) {
                     $class = '';
-                    if($row['statement']) $class = 'statement';
-                    if($row['outstanding']) $class = 'outstanding';
+                    if($row['statement']) $class .= ' statement';
+                    if($row['outstanding']) $class .= ' outstanding';
+                    if($row['outstanding']=='2') $class .= ' marked';
                     if($row['value']<0) $class .= ' negative';
                 ?>
                     <li class="<?php echo $class; ?>">
+                        <?php if($row['statement']) { ?>
                         <a href="<?php echo query_string(array(), array('id' => $row['id'],'action'=>'edit')); ?>">
+                        <?php } else { ?>
+                        <a href="#<?php echo $row['id']; ?>" class="statement">
+                        <?php } ?>
                             <?php echo date('m/d/y',strtotime($row['tran_date'])) ?>
                             <span class="amount">$<?php echo money_format('%#10n', $row['value']); ?></span>
                             <br>
@@ -280,19 +310,64 @@ if (!isset($handler) || !$handler)
                             <br>
                             <span class="account">(<?php echo $row['name']; ?>)</span>
                             <?php } ?>
+                        <?php if(!$row['statement']) { ?>
+                        </a>
+                        <a href="<?php echo query_string(array(), array('id' => $row['id'],'action'=>'edit')); ?>" class="inline">
+                        <?php } ?>
                             <img src="arrow.png">
                         </a>
                     </li>
                 <?php }// end foreach ?>
-                    <!-- add link to next -->
-                    <?php if($more) { ?>
-                    <li>
-                        <a href="<?php echo query_string(array(), array('limit'=> $_REQUEST['limit']+30)); ?>">
-                            Load Next 30
+                    <li id="finalize"<?php $state = check_balance($aID); echo $state['total']!=$state['statement']?'class="outstanding"':''; ?>>
+                        <a href="<?php echo query_string(array(), array('action'=>'done')); ?>">
+                            Finalize Outstanding<br>
+                            <span id="summary" class="description"><?php echo 'Total:$'.$state['total'].'<br> Statement:$'.$state['statement']; ?></span>
                         </a>
                     </li>
-                    <?php }// end if more ?>
             </ul>
+            <script>
+                $('#list_item a.statement').click(function(e) {
+                    e.preventDefault();
+                    console.log('Mark');
+                    var i = e.target.hash.substring(1);
+                    var out = $(this).parent('li').hasClass('marked')?'1':'2';
+                    $.ajax({
+                        url: "?",
+                        type: 'post',
+                        data: {
+                            page: 'ajax',
+                            action: 'outstanding',
+                            id: i,
+                            outstanding: out,
+                            aID: <?php echo $aID; ?>
+                        },
+                        success: function(result) {
+                            xml = $.parseXML(result);
+                            if($(xml).find('result').text() == 'fail') return;
+                            switch($(xml).find('outstanding').text()) {
+                                case '1':
+                                    $('a[href="#'+$(xml).find('id').text()+'"').parent('li').removeClass('marked');
+                                break;
+                                case '2':
+                                    $('a[href="#'+$(xml).find('id').text()+'"').parent('li').addClass('marked');
+                                break;
+                                case '0':
+                                    $('a[href="#'+$(xml).find('id').text()+'"').parent('li').removeClass('marked');
+                                    $('a[href="#'+$(xml).find('id').text()+'"').parent('li').removeClass('outstanding');
+                                break;
+                            }
+                            total = $(xml).find('total').text();
+                            statement = $(xml).find('statement').text();
+                            document.getelementByID('summary').innerHTML = 'Total:$'+total+'<br> Statement:$'+statement;
+                            if(total == statement) {
+                                $('#finalize').removeClass('outstanding');
+                            } else {
+                                $('#finalize').addClass('outstanding');
+                            }
+                        }
+                    });
+                });
+            </script>
             <?php }// end list ?>
         </div>
         <?php } ?>

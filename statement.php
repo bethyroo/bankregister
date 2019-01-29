@@ -16,7 +16,7 @@ switch($_REQUEST['action']) {
     case 'save':
     case 'add':
         if(save_transaction($_REQUEST, $_POST['id'])) {
-            header('location: .?aID='.$aID);
+            header('location: '. query_string(array('action', 'id')));
         } else {
             $message = 'Error saving transaction.';
         }
@@ -27,19 +27,25 @@ switch($_REQUEST['action']) {
     case 'new':
         $transaction = array('id' => 0);
         break;
+    case 'done':
+        if(finalize_outstanding($aID)) {
+            header('location: '. query_string(array('action', 'id')));
+        } else {
+            $message = 'Error saving transaction.';
+        }
+        break;
     case 'delete':
         if(delete_transaction($_POST['id'])) {
-            header('location: .?aID='.$aID);
+            header('location: '. query_string(array('action', 'id')));
         } else {
             $message = 'Error deleting transaction.';
         }
 }
 $account_info = get_accounts($aID);
 $account_info = $account_info[0];
-$transactions = get_transactions($aID);
-$more = check_limit($aID);
+$transactions = get_transactions($aID, true);
 // see if any recurring
 $recurring = count_recurring();
-$page = ($_SESSION['mobile'] && !$aID && !$_REQUEST['q'])?'account.html.php':'list.html.php';
+$page = ($_SESSION['mobile'] && !$aID && !$_REQUEST['q'])?'account.html.php':'statement.html.php';
 ?>
 

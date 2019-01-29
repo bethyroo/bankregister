@@ -8,7 +8,7 @@
 if (!isset($handler) || !$handler)
     die('access denied!');
 // set current revision for update purposes
-$version = 1.04;
+$version = 1.05;
 
 function install() {
     global $db, $version;
@@ -50,6 +50,10 @@ function install() {
         // add column for transfers
         $db->query('ALTER TABLE transactions ADD `statement` enum("0","1") NOT NULL DEFAULT "0"');
         $db->query('ALTER TABLE accounts ADD `credit` float(10,2) NOT NULL DEFAULT 0.00');
+    }
+    if(VERSION < 1.05) {
+        // add column for transfers
+        $db->query('ALTER TABLE transactions MODIFY `outstanding` enum("0","1","2") NOT NULL DEFAULT "1"');
     }
     write_config('VERSION', $version);
     // switch between desktop/mobile versions

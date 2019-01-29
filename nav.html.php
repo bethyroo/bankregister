@@ -19,7 +19,7 @@ if (!isset($handler) || !$handler)
         <ul>
             <li><a href='?page=logout'>Logout</a></li>
             <li><a href='?page=list'>Transactions<img src="arrow.png"></a></li>
-            <li><a href='?page=import'>Statement<img src="arrow.png"></a></li>
+            <li><a href='?page=statement'>Statement<img src="arrow.png"></a></li>
             <li><a href='?page=recurring'>Recurring Transactions<img src="arrow.png"></a></li>
             <li><a href='?page=account'>Manage Accounts<img src="arrow.png"></a></li>
             <li><a href='?page=users'>Manage Users<img src="arrow.png"></a></li>
