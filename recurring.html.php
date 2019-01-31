@@ -289,7 +289,7 @@ if (!isset($handler) || !$handler)
                     <li class="<?php echo $class; ?>">
                         <a href="<?php echo query_string(array(), array('id' => $row['id'],'action'=>'edit')); ?>">
                             <?php echo $row['text']; ?>
-                            <span class="amount">$<?php echo money_format('%#10n', $row['value']); ?></span>
+                            <span class="amount"><?php echo money_format('%#10n', $row['value']); ?></span>
                             <br>
                             <span class="description"><?php echo $row['description']; ?></span>
                             <br>

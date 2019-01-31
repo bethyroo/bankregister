@@ -303,7 +303,7 @@ if (!isset($handler) || !$handler)
                         <a href="#<?php echo $row['id']; ?>" class="statement">
                         <?php } ?>
                             <?php echo date('m/d/y',strtotime($row['tran_date'])) ?>
-                            <span class="amount">$<?php echo money_format('%#10n', $row['value']); ?></span>
+                            <span class="amount"><?php echo money_format('%#10n', $row['value']); ?></span>
                             <br>
                             <span class="description"><?php echo $row['description']; ?></span>
                             <?php if(!$aID) { ?>
