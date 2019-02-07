@@ -343,8 +343,11 @@ ul#mode {
     clear: both;
     width: 100%;
     padding-top: -1em;
-    position: fixed;
+    position: relative;
     bottom: 0;
+}
+body {
+    height: 100%;
 }
 /* Prevent floats from escaping */
 #mode:before, #mode:after {
