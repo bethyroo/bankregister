@@ -13,7 +13,7 @@ if (!isset($handler) || !$handler)
         <meta name="viewport" content="width=device-width, minimum-scale=1,maximum-scale=1, user-scalable=no">
         <link rel="apple-touch-icon-precomposed" href="http://<?php echo $_SERVER['SERVER_NAME']. dirname($_SERVER['PHP_SELF']); ?>/apple-touch-icon-precomposed.png"/>
         <link rel="shortcut icon" href="favicon.ico" />
-        <link rel="stylesheet" type="text/css" href="<?php echo $_SESSION['mobile']?'mobile.css':'main.css'; ?>">
+        <link rel="stylesheet" type="text/css" href="<?php echo $_SESSION['mobile']?'mobile.css?1':'main.css'; ?>">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script>
             function toggleTransfer(visible) {
@@ -123,7 +123,7 @@ if (!isset($handler) || !$handler)
                                     <input type="hidden" name="account" value="<?php echo $aID; ?>">
                                     <?php } ?>
                                 </td>
-                                <td class="cell3"><input type="text" name="value" value="<?php echo $transaction['value']; ?>" placeholder="$ 0.00" size="8"></td>
+                                <td class="cell3"><input type="number" step="0.01" name="value" value="<?php echo $transaction['value']; ?>" placeholder="$ 0.00" size="8"></td>
                                 <td class="cell4"><input type="checkbox" name="outstanding" value="1"<?php echo ($transaction['outstanding']?'checked=checked':''); ?>" size="8"><label>Outstanding</label></td>
                                 <td class="cell5">
                                     <input type="submit" name="action" value="<?php echo $transaction['id']?'save':'add';?>">
@@ -182,7 +182,7 @@ if (!isset($handler) || !$handler)
                 <?php } else { ?>
                 <input type="hidden" name="account" value="<?php echo $aID; ?>">
                 <?php } ?>
-                <input type="text" name="value" value="<?php echo $transaction['value']; ?>" placeholder="$ 0.00" size="8">
+                <input type="number" step="0.01" name="value" value="<?php echo $transaction['value']; ?>" placeholder="$ 0.00" size="8">
                 <?php if(!$transaction['id'] || !$transaction['statement']) { ?>
                 <label id="outstanding_label">Outstanding</label>
                 <input type="checkbox" name="outstanding" id="outstanding" value="1"<?php echo ($transaction['outstanding']||!$transaction['id']?'checked=checked':''); ?> size="8">
