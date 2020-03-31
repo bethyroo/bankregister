@@ -13,7 +13,7 @@ if (!isset($handler) || !$handler)
         <meta name="viewport" content="width=device-width, minimum-scale=1,maximum-scale=1, user-scalable=no">
         <link rel="apple-touch-icon-precomposed" href="http://<?php echo $_SERVER['SERVER_NAME']. dirname($_SERVER['PHP_SELF']); ?>/apple-touch-icon-precomposed.png"/>
         <link rel="shortcut icon" href="favicon.ico" />
-        <link rel="stylesheet" type="text/css" href="<?php echo $_SESSION['mobile']?'mobile.css':'main.css'; ?>">
+        <link rel="stylesheet" type="text/css" href="<?php echo $_SESSION['mobile']?'mobile.css?2':'main.css'; ?>">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <title><?php echo $title; ?></title>
         <style type="text/css">

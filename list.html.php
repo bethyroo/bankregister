@@ -13,7 +13,7 @@ if (!isset($handler) || !$handler)
         <meta name="viewport" content="width=device-width, minimum-scale=1,maximum-scale=1, user-scalable=no">
         <link rel="apple-touch-icon-precomposed" href="http://<?php echo $_SERVER['SERVER_NAME']. dirname($_SERVER['PHP_SELF']); ?>/apple-touch-icon-precomposed.png"/>
         <link rel="shortcut icon" href="favicon.ico" />
-        <link rel="stylesheet" type="text/css" href="<?php echo $_SESSION['mobile']?'mobile.css?1':'main.css'; ?>">
+        <link rel="stylesheet" type="text/css" href="<?php echo $_SESSION['mobile']?'mobile.css?2':'main.css'; ?>">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script>
             function toggleTransfer(visible) {
@@ -102,12 +102,12 @@ if (!isset($handler) || !$handler)
                                     <input type="text" id="description" name="description" value="<?php echo $transaction['description']; ?>" size="30" placeholder="Description">
                                     <!-- Transfer form -->
                                     <select name="how" id="how" style="display:none;">
-                                        <option value="1" selected="selected">To</option>
-                                        <option value="0">From</option>
+                                        <option value="1">To</option>
+                                        <option value="0" selected="selected">From</option>
                                     </select>
                                     <select name="to" id="to" style="display:none;">
                                         <?php foreach($accounts_array as $account) { 
-                                            echo '<option value="'.$account['id'].'"'.($account['id']==$aID?' selected="selected"':'').'>'.$account['name'].'</option>';
+                                            echo '<option value="'.$account['id'].'"'.($account['id']==DEFAULT_ACCOUNT?' selected="selected"':'').'>'.$account['name'].'</option>';
                                         }
                                         ?>
                                     </select>
@@ -162,12 +162,12 @@ if (!isset($handler) || !$handler)
                 <input type="text" id="description" name="description" value="<?php echo $transaction['description']; ?>" size="30" placeholder="Description">
                 <!-- Transfer form -->
                 <select name="how" id="how" style="display:none;">
-                    <option value="1" selected="selected">To</option>
-                    <option value="0">From</option>
+                    <option value="1">To</option>
+                    <option value="0" selected="selected">From</option>
                 </select>
                 <select name="to" id="to" style="display:none;">
                     <?php foreach($accounts_array as $account) { 
-                        echo '<option value="'.$account['id'].'"'.($account['id']==$aID?' selected="selected"':'').'>'.$account['name'].'</option>';
+                        echo '<option value="'.$account['id'].'"'.((int)$account['id']==(int)DEFAULT_ACCOUNT?' selected="selected"':'').'>'.$account['name'].'</option>';
                     }
                     ?>
                 </select>
