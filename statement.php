@@ -25,7 +25,7 @@ switch($_REQUEST['action']) {
         $transaction = load_transaction($_REQUEST['id']);
         break;
     case 'new':
-        $transaction = array('id' => 0);
+        $transaction = array('id' => 0, 'value' => '-0');
         break;
     case 'done':
         if(finalize_outstanding($aID)) {

@@ -42,7 +42,7 @@ if(isset($_POST['name']) && isset($_POST['password'])) {
     <body id="login">
         <h1>Bank Register</h1>
         <form method="post" action="" id="login_form">
-            <input type="hidden" name="mobile" id="mobile" value="0">
+            <input type="hidden" name="mobile" id="mobile" value="1">
             <label for="name">Username:</label>
             <input type="text" name="name" id="name"/>
             <br>

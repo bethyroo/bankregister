@@ -42,6 +42,7 @@ if (!isset($handler) || !$handler)
             
             <button type="submit" name="action" value="save">Save</button>
             
+            <button type="submit" name="action" value="delete">Delete</button>
         </form>
         <p class="error"><?php echo $message; ?></p>
         <?php } else { 
